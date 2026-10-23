@@ -2,7 +2,7 @@
 	"model": "opus",
 	"language": "korean",
 	"permissions": {
-		"allow": ["Edit(/docs/**)", "Edit(/artifacts/work/**)", "Bash(sh scripts/check-trace.sh *)"],
+		"allow": ["Edit(/docs/**)", "Edit(/artifacts/work/**)", "Bash(sh scripts/check-trace.sh *)", "Bash(node scripts/check-api.mjs*)"],
 		"ask": [
 			"Edit(/.claude/**)",
 			"Edit(/.codex/**)",

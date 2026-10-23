@@ -26,4 +26,4 @@ verifier 결과를 그대로 보고하지 않는다. 아래에 해당하는 항�
 - `사람 승인 필요`: 근거와 추천안을 보여주고 답을 받는다.
 - PRD 문제: `HANDOFF.md` "PRD 변경 요청".
 - 보고에는 `확인 못한 부분`을 `일치`와 같은 비중으로 생략 없이 넣는다.
-- 모두 정리되면 `HANDOFF.md` 다음 행동을 `test-write`로 갱신한다.
+- 모두 정리되면 `HANDOFF.md` 다음 행동을 `api-verify`로 갱신한다(이 feature에 API가 없으면 `test-write`).

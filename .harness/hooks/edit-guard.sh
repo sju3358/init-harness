@@ -3,7 +3,7 @@
 # 사용법: edit-guard.sh claude|codex (stdin: 도구 입력 JSON)
 #   공통: .harness/state/(승인 기록) 편집 차단
 #   claude: 소스·빌드 파일 편집 차단 (기획·문서 전용)
-#   codex: 요구사항·PRD 편집 차단, 소스·빌드 파일은 작업 브랜치 + 계획 승인 기록이 있을 때만 허용
+#   codex: 요구사항·PRD·API 문서 편집 차단, 소스·빌드 파일은 작업 브랜치 + 계획 승인 기록이 있을 때만 허용
 
 dir=$(dirname "$0")
 . "$dir/lib.sh"
@@ -26,7 +26,7 @@ esac
 kind=other
 case "$rel" in
   src/*|build.gradle|build.gradle.kts|settings.gradle|settings.gradle.kts|pom.xml|gradle/*|gradlew|gradlew.bat) kind=code ;;
-  docs/requirements.md|docs/prd/*) kind=prd ;;
+  docs/requirements.md|docs/prd/*|docs/api/*) kind=prd ;;
 esac
 
 if [ "$agent" = claude ]; then
@@ -34,7 +34,7 @@ if [ "$agent" = claude ]; then
   exit 0
 fi
 
-[ "$kind" = prd ] && deny "Codex는 요구사항·PRD($rel)를 편집하지 않음. artifacts/work/<F-##>/HANDOFF.md의 'PRD 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
+[ "$kind" = prd ] && deny "Codex는 요구사항·PRD·API 문서($rel)를 편집하지 않음. artifacts/work/<F-##>/HANDOFF.md의 'PRD 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
 
 if [ "$kind" = code ]; then
   branch=$(current_branch)

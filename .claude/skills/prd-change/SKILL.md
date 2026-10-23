@@ -1,6 +1,6 @@
 ---
 name: prd-change
-description: 승인된 PRD를 바꿔야 할 때 쓴다. Codex가 artifacts/work/F-##/HANDOFF.md에 남긴 "PRD 변경 요청"이나 고객 요구 변경을 요구사항·PRD에 반영하고, 버전을 올려 재검증·재승인까지 진행한다. "PRD 변경 요청 반영", "요구사항 바뀜", "HANDOFF 처리" 요청에 쓴다.
+description: 승인된 PRD·API 문서를 바꿔야 할 때 쓴다. Codex가 artifacts/work/F-##/HANDOFF.md에 남긴 "PRD 변경 요청"이나 고객 요구 변경을 요구사항·PRD에 반영하고, 버전을 올려 재검증·재승인까지 진행한다. "PRD 변경 요청 반영", "요구사항 바뀜", "HANDOFF 처리" 요청에 쓴다.
 ---
 
 # PRD 변경
@@ -20,6 +20,7 @@ description: 승인된 PRD를 바꿔야 할 때 쓴다. Codex가 artifacts/work/
 - `docs/ITD-####` 브랜치에서 작업한다(새 티켓이 있으면 받음).
 - PRD를 고치고 버전을 올린다(작은 보완 vX.Y+1, 범위 변경 vX+1.0). 변경 이력에 근거(요청 번호, REQ)를 적는다.
 - 영향받는 feature를 찾아 개요 feature 목록 비고에 "PRD vX.Y 변경 영향"을 적는다.
+- API가 바뀌면 `api-design`의 3단계(API 상태 `변경`·`폐기`, `CHANGELOG.md` 프론트 영향)를 따르고, 끝에 프론트 전달용 변경 요약을 사용자에게 준다.
 - `HANDOFF.md`의 처리 칸에 `반영 vX.Y` 또는 `반려(사유)`를 적는다.
 
 ## 4. 재검증·재승인

@@ -50,10 +50,10 @@ strip_cmd() {
     }' | tr '\n' '\036' | sed -e 's/"[^"]*"//g' -e "s/'[^']*'//g" | tr '\036' '\n'
 }
 
-# 요구사항·PRD 내용 해시. 상태 줄은 승인 후 갱신되므로 제외
+# 요구사항·PRD·API 문서 내용 해시. 상태 줄은 승인 후 갱신되므로 제외
 prd_hash() {
   root=$(repo_root)
-  find "$root/docs/requirements.md" "$root/docs/prd" -name '*.md' ! -name '_template.md' 2>/dev/null \
+  find "$root/docs/requirements.md" "$root/docs/prd" "$root/docs/api" -name '*.md' ! -name '_template.md' 2>/dev/null \
     | LC_ALL=C sort \
     | while read -r f; do printf '%s\n' "${f#"$root"/}"; grep -v '^- 상태:' "$f"; done \
     | shasum -a 256 | cut -d' ' -f1

@@ -28,7 +28,7 @@ fi
 
 if has 'PRD 승인'; then
   prd_hash > "$state/prd-approved"
-  echo "승인 기록: PRD 승인 (요구사항·PRD 내용 해시 저장). 이후 docs/requirements.md·docs/prd/ 내용이 바뀌면 다시 승인 필요."
+  echo "승인 기록: PRD 승인 (요구사항·PRD·API 문서 해시 저장). 이후 docs/requirements.md·docs/prd/·docs/api/ 내용이 바뀌면 다시 승인 필요."
 fi
 
 if has '계획 승인'; then

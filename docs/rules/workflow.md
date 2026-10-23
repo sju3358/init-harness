@@ -8,12 +8,14 @@
 | --- | --- | --- | --- |
 | 요구사항 | `REQ-###` | `docs/requirements.md` 표 | `REQ-001` |
 | feature | `F-##` | `docs/prd/00-overview.md` feature 목록 | `F-01` |
+| API | `API-###` | `docs/api/<도메인>.md` 엔드포인트 제목 | `API-007` |
 | 테스트 케이스 | `TC-F##-##` | `artifacts/work/F-##/PLAN.md` | `TC-F01-03` |
 
 - ID는 한번 정하면 바꾸거나 재사용하지 않는다. 삭제된 요구사항은 행을 지우지 않고 상태를 `삭제`로 바꾼다.
 - PRD의 모든 규정 문장은 근거 REQ를 함께 적는다. REQ 없이 PRD에 들어간 내용은 "출처 없음"으로 검증에서 걸린다.
 - 테스트는 `@DisplayName` 또는 주석에 `TC-F##-##`와 `REQ-###`를 적어 추적한다.
 - 누락 검사는 `sh scripts/check-trace.sh prd`, `sh scripts/check-trace.sh feature F-##`로 기계적으로 한다.
+- API 문서와 코드의 엔드포인트 목록 비교는 `node scripts/check-api.mjs [F-##]`로 한다.
 
 ## 단계
 
@@ -24,8 +26,9 @@
 | C0 초기 셋팅 | `project-init` | `docs/project.md`, Git 훅 등록 | 스택·DB·MQ·검증 명령을 사용자에게 확인받음 |
 | C1 요구사항 | `req-gather` | `docs/requirements.md` | 요구사항마다 REQ ID·출처·인수 기준, 미결 질문 분리 |
 | C2 PRD | `prd-write` | `docs/prd/**` | 범위의 모든 REQ가 PRD 어딘가에 반영, feature 목록 확정 |
-| C3 검증 | `prd-verify` | `docs/verification/prd-verify.md` | `prd-verifier`(새 컨텍스트) 판정표, `check-trace.sh prd` 통과 |
-| ✋ PRD 승인 | `prd-verify` | `00-overview.md` 상태 `승인 vX.Y` | 사용자가 `PRD 승인` 입력 |
+| C2b API 문서 | `api-design` | `docs/api/**` | PRD의 모든 API가 필드·에러까지 문서화, 프론트 전달용 요약 |
+| C3 검증 | `prd-verify` | `docs/verification/prd-verify.md` | `prd-verifier`(새 컨텍스트) 판정표(요구사항 ↔ PRD ↔ API), `check-trace.sh prd` 통과 |
+| ✋ PRD 승인 | `prd-verify` | `00-overview.md`·`docs/api/README.md` 상태 `승인 vX.Y` | 사용자가 `PRD 승인` 입력. API 문서도 함께 승인됨 |
 
 ### Codex: 구현·검증 (feature 단위)
 
@@ -36,6 +39,7 @@
 | ✋ 계획 승인 | `feature-plan` | 승인 기록 | 사용자가 `계획 승인` 입력 |
 | X3 구현 | `implement` | 소스, `PLAN.md` "구현 중 변경" | 빌드 통과, 계획 이탈은 사용자 승인 |
 | X4 문서-코드 검증 | `doc-code-verify` | `VERIFY.md` | `verifier` 판정표, REQ마다 `파일:줄` 근거 |
+| X4b API 검증 | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정 |
 | X5 테스트 작성 | `test-write` | 테스트 코드 | `PLAN.md`의 TC 전부 구현 |
 | X6 테스트 검증 | `test-verify` | `TEST-REPORT.md`, `docs/traceability.md` | 테스트 실행 결과 원문, `check-trace.sh feature` 통과, `verifier`의 테스트 유효성 판정 |
 | ✋ 커밋·푸시 승인 | `itd-commit` | 커밋, feature 브랜치 push | 사용자가 `커밋 승인`·`푸시 승인` 입력 |
@@ -46,7 +50,7 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 
 | 게이트 | 입력 문구 | 기록 | 막는 동작 |
 | --- | --- | --- | --- |
-| PRD 승인 | `PRD 승인` | `.harness/state/prd-approved` | Codex `feature-start` 진행 |
+| PRD 승인 | `PRD 승인` | `.harness/state/prd-approved` (요구사항·PRD·API 문서 해시) | Codex `feature-start`·`feature-plan` 진행 |
 | 계획 승인 | `계획 승인` | `.harness/state/plan-approved--<브랜치>` | `src/`·빌드 파일 편집 |
 | 커밋 승인 | `커밋 승인` | `.harness/state/git-approved`(30분) | `git commit` |
 | 푸시 승인 | `푸시 승인` | `.harness/state/git-approved`(30분) | `git push` |
@@ -59,7 +63,8 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 ## 되돌림
 
 - 구현·검증 중 PRD 문제 발견 → Codex가 `HANDOFF.md` "PRD 변경 요청"에 기록하고 멈춤 → 사용자가 Claude에서 `prd-change` 실행 → PRD 버전 증가, 재검증, `PRD 승인` → Codex가 `PLAN.md`를 다시 맞추고 `계획 승인`부터 재개.
-- 검증(X4·X6)에서 "수정 필요"가 나오면 X3으로 돌아가 고친 뒤 해당 검증을 다시 실행한다. 고친 범위만 재검증하지 않고 같은 REQ에 걸린 항목을 모두 다시 본다.
+- API 문서와 코드가 다르면 코드를 문서에 맞추는 것이 기본이다. 문서를 바꿔야 하면 위와 같이 "PRD 변경 요청"으로 처리하고 `prd-change`에서 `api-design` 3단계(변경 이력·프론트 영향)를 거친다.
+- 검증(X4·X4b·X6)에서 "수정 필요"가 나오면 X3으로 돌아가 고친 뒤 해당 검증을 다시 실행한다. 고친 범위만 재검증하지 않고 같은 REQ에 걸린 항목을 모두 다시 본다.
 
 ## 검증 원칙
 

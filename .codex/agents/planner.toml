@@ -9,13 +9,14 @@ developer_instructions = """
 
 - `docs/prd/features/F-##.md` (대상 feature 명세)
 - `docs/prd/01-skillset.md`, `docs/prd/02-common.md`, `docs/prd/90-deploy-ops.md`
+- `docs/api/README.md`와 이 feature의 엔드포인트 문서
 - `docs/project.md` (스택, 디렉터리, 검증 명령)
 - 현재 코드(`src/`). 재사용할 기존 클래스·유틸·패턴을 먼저 찾습니다.
 - 재계획이면 기존 `PLAN.md`와 `HANDOFF.md`
 
 ## 절차
 
-1. feature 명세의 모든 REQ를 "요구사항 매핑" 표에 옮기고, 각각 구현 방법과 변경 파일을 적습니다. 빠진 REQ가 없어야 합니다.
+1. feature 명세의 모든 REQ를 "요구사항 매핑" 표에 옮기고, 각각 구현 방법과 변경 파일을 적습니다. 빠진 REQ가 없어야 합니다. `docs/api/`에서 `- feature: F-##`인 엔드포인트는 모두 API 열에 적고, 컨트롤러·DTO·에러 코드를 문서의 필드 정의대로 만드는 계획을 씁니다.
 2. 변경 파일 표에 신규/수정 구분과 이유를 적습니다. 기존 코드를 재사용할 수 있으면 그 `파일:줄`을 적습니다.
 3. 명세의 인수 조건마다 테스트 케이스(`TC-F##-##`)를 하나 이상 만듭니다. 정상·경계·예외를 구분하고, 입력·상태와 기대 결과를 구체 값으로 적습니다.
 4. 명세가 침묵하거나 모호한 부분은 추측으로 채우지 않습니다.

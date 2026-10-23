@@ -6,6 +6,7 @@ feature마다 `artifacts/work/F-##/`를 만들고 `_template/`의 파일을 복�
 | --- | --- | --- |
 | `PLAN.md` | Codex `planner` | REQ ↔ 변경 파일 ↔ TC 매핑, 확인 필요, 구현 중 변경 |
 | `VERIFY.md` | Codex `verifier` | 문서-코드 정합성 판정표 |
+| `API-VERIFY.md` | Codex `verifier` | API 문서-코드 엔드포인트·항목별 판정표 |
 | `TEST-REPORT.md` | Codex `test-verify` | 테스트 실행 결과와 테스트 유효성 판정 |
 | `HANDOFF.md` | Codex·Claude | 현재 상태, 다음 행동, PRD 변경 요청 |
 

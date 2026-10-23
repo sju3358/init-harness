@@ -24,6 +24,7 @@
 | `02-common.md` | 공통 규약(API 응답, 예외, 인증, 로깅, 설정) |
 | `features/F-##.md` | 기능별 명세 |
 | `90-deploy-ops.md` | 배포·로깅·모니터링·롤백 |
+| `docs/api/` | 프론트 전달용 API 문서(엔드포인트 상세, 변경 이력). PRD와 함께 승인 |
 
 ## feature 목록
 

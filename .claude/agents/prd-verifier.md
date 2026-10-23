@@ -1,6 +1,6 @@
 ---
 name: prd-verifier
-description: 요구사항 명세(docs/requirements.md)와 PRD(docs/prd/) 사이의 정합성을 작성자와 분리된 새 컨텍스트에서 검증할 때 사용한다. prd-verify, prd-change 스킬이 호출한다.
+description: 요구사항 명세(docs/requirements.md)와 PRD(docs/prd/)·API 문서(docs/api/) 사이의 정합성을 작성자와 분리된 새 컨텍스트에서 검증할 때 사용한다. prd-verify, prd-change 스킬이 호출한다.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 ---
@@ -11,6 +11,7 @@ model: opus
 
 - `docs/requirements.md` (요구사항, 미결 질문, 범위 밖)
 - `docs/prd/**` (`_template.md` 제외)
+- `docs/api/**` (`_template.md` 제외)
 - 원본 출처: 호출 프롬프트에 Notion 페이지 내용이나 대화 요약이 첨부되면 함께 대조합니다. 첨부가 없으면 출처 대조는 "확인 못함"으로 둡니다.
 - 재검증이면 호출 프롬프트가 지정한 변경 범위. 변경 범위만 보지 않고 그 범위의 REQ가 인용된 모든 문서를 다시 봅니다.
 
@@ -24,6 +25,12 @@ model: opus
 4. 문서 사이 모순을 찾습니다(공통 규약 ↔ feature 명세, feature ↔ feature, 배포 명세 ↔ 스킬셋).
 5. 미결 질문(Q-###)에 답이 없는데 PRD가 특정 답을 전제하고 있는지 찾습니다.
 6. feature 인수 조건이 테스트로 판정 가능한 문장인지 봅니다.
+7. API 문서를 봅니다.
+   - feature 명세의 API 목록과 `docs/api/` 엔드포인트가 일대일로 맞는지
+   - 비즈니스 규칙·예외 상황이 요청 제약·에러 코드로 빠짐없이 옮겨졌는지(예: "재고 부족 시 거절" → 해당 에러 코드)
+   - `02-common.md` 규약(응답 포맷, 에러 코드, 날짜 형식)과 `docs/api/README.md`·각 엔드포인트가 같은 값인지
+   - 필드마다 타입·필수·null 가능이 비어 있지 않은지(프론트가 추측해야 하는 칸이 없는지)
+   - 변경이면 `CHANGELOG.md`의 프론트 영향 분류가 맞는지(필드 삭제·타입 변경·필수 추가는 `수정 필요`)
 
 ## 출력
 
@@ -43,6 +50,7 @@ model: opus
 ### 문서 간 모순
 ### 미결 전제
 ### 판정 불가 인수 조건
+### API 문서 (API | 대조 기준 | 판정 | 근거)
 ### 수정 필요 (작성자에게)
 ### 사람 승인 필요 (사용자에게)
 ### 확인 못한 부분

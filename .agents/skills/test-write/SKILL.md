@@ -7,7 +7,7 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
 
 ## 1. 전제
 
-- `VERIFY.md`의 `수정 필요`가 모두 해소됐는지 확인한다. 남아 있으면 `implement`로 돌아간다.
+- `VERIFY.md`·`API-VERIFY.md`의 `수정 필요`가 모두 해소됐는지 확인한다. 남아 있으면 `implement`로 돌아간다.
 - `docs/project.md`의 테스트 스택(JUnit 5, AssertJ, Mockito, Testcontainers 여부)을 따른다.
 
 ## 2. 작성

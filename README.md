@@ -16,11 +16,11 @@ rm -rf .git && git init -b main      # 하네스 이력을 끊고 프로젝트 �
 
 ```
 [Claude · Opus 5.5]  기획·문서
- project-init → req-gather → prd-write → prd-verify → ✋PRD 승인 → docs 커밋
-                                                          ▲
-                                         PRD 변경 요청(HANDOFF.md) → prd-change
-[Codex]  구현·검증                                         │
- feature-start → feature-plan → ✋계획 승인 → implement → doc-code-verify
+ project-init → req-gather → prd-write → api-design → prd-verify → ✋PRD 승인 → docs 커밋
+                                                                     ▲            (API 문서 → 프론트 전달)
+                                                    PRD 변경 요청(HANDOFF.md) → prd-change
+[Codex]  구현·검증                                                    │
+ feature-start → feature-plan → ✋계획 승인 → implement → doc-code-verify → api-verify
  → test-write → test-verify → ✋커밋/푸시 승인 → itd-commit
  (PR·머지는 사람이 직접)
 ```
@@ -55,13 +55,14 @@ Pro·Plus 사용량 한도를 고려해 서브에이전트는 계획·검증에�
 | 경로 | 내용 |
 | --- | --- |
 | `CLAUDE.md` / `AGENTS.md` | Claude / Codex 진입점 |
-| `docs/` | 원본 문서. 요구사항, PRD, 추적표, 프로젝트 설정, 규칙 |
+| `docs/` | 원본 문서. 요구사항, PRD, API 문서(`docs/api/`, 프론트 전달용), 추적표, 프로젝트 설정, 규칙 |
 | `artifacts/work/F-xx/` | feature별 계획·검증·테스트 리포트·인계 |
 | `.claude/skills/`, `.claude/agents/` | Claude 기획 스킬·검증 에이전트 |
 | `.agents/skills/`, `.codex/agents/` | Codex 구현·검증 스킬·에이전트 |
 | `.harness/hooks/` | Claude·Codex 공용 훅 스크립트 |
 | `.githooks/` | commit-msg(ITD 형식), pre-push(보호 브랜치 차단) |
-| `scripts/check-trace.sh` | REQ 추적 누락 기계 검사 |
+| `scripts/check-trace.sh` | REQ·API 추적 누락 기계 검사 |
+| `scripts/check-api.mjs` | API 문서 ↔ Spring 컨트롤러 엔드포인트 목록 비교 |
 
 ## 한계
 

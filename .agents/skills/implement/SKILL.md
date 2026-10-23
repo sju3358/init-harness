@@ -8,7 +8,8 @@ description: 승인된 개발계획(PLAN.md)대로 feature를 구현한다. 계�
 ## 1. 전제
 
 - `PLAN.md` 상태가 `승인됨`이어야 한다. 아니면 `feature-plan`으로 돌아간다. 소스 편집이 `계획 승인 기록 없음`으로 차단되면 우회하지 않고 사용자에게 `계획 승인` 입력을 요청한다.
-- `docs/prd/01-skillset.md`(규약), `docs/prd/02-common.md`(공통), `docs/project.md`(명령)를 읽는다.
+- `docs/prd/01-skillset.md`(규약), `docs/prd/02-common.md`(공통), `docs/project.md`(명령), `docs/api/`(이 feature의 엔드포인트)를 읽는다.
+- 컨트롤러·DTO·에러 코드는 API 문서의 경로, 필드 이름, 타입, 필수, 검증 제약을 그대로 따른다. 문서와 다르게 만들어야 할 이유가 생기면 구현하지 않고 "PRD 변경 요청"으로 올린다.
 
 ## 2. 구현
 
