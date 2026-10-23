@@ -1,0 +1,38 @@
+{
+	"hooks": {
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/record-approval.sh\""
+					}
+				]
+			}
+		],
+		"PreToolUse": [
+			{
+				"matcher": "Bash|shell|exec_command",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/git-safety-guard.sh\""
+					},
+					{
+						"type": "command",
+						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/approval-gate.sh\""
+					}
+				]
+			},
+			{
+				"matcher": "apply_patch|Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/codex-tool-adapter.mjs\" edit-guard codex"
+					}
+				]
+			}
+		]
+	}
+}

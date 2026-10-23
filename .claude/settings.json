@@ -1,0 +1,55 @@
+{
+	"model": "opus",
+	"language": "korean",
+	"permissions": {
+		"allow": ["Edit(/docs/**)", "Edit(/artifacts/work/**)", "Bash(sh scripts/check-trace.sh *)"],
+		"ask": [
+			"Edit(/.claude/**)",
+			"Edit(/.codex/**)",
+			"Edit(/.agents/**)",
+			"Edit(/.harness/**)",
+			"Edit(/.githooks/**)",
+			"Edit(/CLAUDE.md)",
+			"Edit(/AGENTS.md)",
+			"Edit(/docs/rules/**)",
+			"Bash(git commit *)",
+			"Bash(git push *)"
+		]
+	},
+	"hooks": {
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh \"$CLAUDE_PROJECT_DIR/.harness/hooks/record-approval.sh\""
+					}
+				]
+			}
+		],
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh \"$CLAUDE_PROJECT_DIR/.harness/hooks/git-safety-guard.sh\""
+					},
+					{
+						"type": "command",
+						"command": "sh \"$CLAUDE_PROJECT_DIR/.harness/hooks/approval-gate.sh\""
+					}
+				]
+			},
+			{
+				"matcher": "Edit|Write|MultiEdit|NotebookEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh \"$CLAUDE_PROJECT_DIR/.harness/hooks/edit-guard.sh\" claude"
+					}
+				]
+			}
+		]
+	}
+}

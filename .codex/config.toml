@@ -1,0 +1,4 @@
+# 프로젝트 Codex 설정. 신뢰된 프로젝트에서만 적용됨
+# 메인 세션은 구현·테스트 작성(양이 많은 작업)이라 가벼운 모델, 계획·검증은 .codex/agents/의 상위 모델 에이전트가 담당
+model = "gpt-6-luna"
+model_reasoning_effort = "medium"
