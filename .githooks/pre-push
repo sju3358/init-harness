@@ -27,5 +27,5 @@ while read -r _local_ref _local_sha remote_ref _remote_sha; do
   esac
 done
 
-[ "$used_adopt" = 1 ] && rm -f "$adopt" && echo "pre-push: 하네스 도입 예외로 push 허용. 승인 기록 삭제" >&2
+[ "$used_adopt" = 1 ] && rm -f "$adopt" && echo "pre-push: 하네스 도입·업데이트 예외로 push 허용. 승인 기록 삭제" >&2
 exit 0

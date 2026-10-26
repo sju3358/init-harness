@@ -1,0 +1,11 @@
+# 프로젝트가 내용으로 채워 쓰는 파일. 처음 설치할 때만 복사하고, 업데이트(.harness/update.sh)에서는 덮어쓰거나 병합하지 않음
+# 업데이트 때 하네스 템플릿이 바뀌었으면 diff만 .harness/update/seed/에 남기고 반영은 사람이 판단
+docs/project.md
+docs/requirements.md
+docs/traceability.md
+docs/prd/00-overview.md
+docs/prd/01-skillset.md
+docs/prd/02-common.md
+docs/prd/90-deploy-ops.md
+docs/api/README.md
+docs/api/CHANGELOG.md

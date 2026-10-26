@@ -20,6 +20,7 @@ description: 하네스가 없는 진행 중 프로젝트에 하네스를 도입�
 tmp=$(mktemp -d)
 git clone --depth 1 https://github.com/sju3358/init-harness.git "$tmp/harness"
 rsync -a --ignore-existing --exclude .git --exclude README.md "$tmp/harness/" ./
+git -C "$tmp/harness" rev-parse HEAD > .harness/version   # 이후 harness-update의 기준 버전
 rm -rf "$tmp"
 ```
 

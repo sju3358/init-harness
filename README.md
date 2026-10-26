@@ -7,6 +7,7 @@ SI 프로젝트(4~5일 단위)용 Claude·Codex 분업 하네스. Claude는 기�
 ```bash
 git clone https://github.com/sju3358/init-harness.git <프로젝트명>
 cd <프로젝트명>
+git rev-parse HEAD > .harness/version   # 설치한 하네스 버전 (업데이트 기준)
 rm -rf .git && git init -b main      # 하네스 이력을 끊고 프로젝트 저장소로 시작
 ```
 
@@ -15,6 +16,10 @@ rm -rf .git && git init -b main      # 하네스 이력을 끊고 프로젝트 �
 ### 진행 중 프로젝트에 도입
 
 기존 프로젝트 루트에서 Claude 세션을 열고 "이 프로젝트에 하네스 도입해줘"라고 하면 `harness-adopt` 스킬이 하네스를 받아 기존 파일과 병합한다. 이 경우만 하네스 절차를 건너뛰고, `하네스 도입 승인` 후 하네스 파일만 main(현재 보호 브랜치)에 바로 커밋·push한다. 이후 작업은 일반 절차를 따른다.
+
+### 하네스 업데이트
+
+하네스가 설치된 프로젝트에서 "하네스 업데이트해줘"라고 하면 `harness-update` 스킬이 최신 하네스를 3-way 병합한다(기준: `.harness/version`, 없으면 설치 당시 커밋을 지정). 프로젝트에서 고친 하네스 파일은 보존되고, 프로젝트가 채운 문서(`.harness/seed`)는 템플릿 변경분만 보고한다. 보호 브랜치에 바로 반영하려면 `하네스 업데이트 승인`.
 
 ## 흐름
 

@@ -5,3 +5,4 @@ waveness/
 build/
 .gradle/
 target/
+.harness/update/
