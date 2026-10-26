@@ -35,5 +35,6 @@
 - `git push --force`/`-f` (`--force-with-lease`도 사용자 승인 후 사용자가 직접 실행)
 - `pkill`, `killall` (포트로 지정해 종료)
 - 승인 기록 없는 `git commit`, `git push`
+- 보호 브랜치 커밋·push (예외: `harness-adopt`의 `하네스 도입 승인`, 하네스 파일만. `workflow.md` "예외" 참고)
 
 차단을 풀어야 하는 정당한 사유가 있으면 사용자가 터미널에서 직접 실행한다.

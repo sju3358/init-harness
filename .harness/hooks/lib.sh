@@ -59,6 +59,24 @@ prd_hash() {
     | shasum -a 256 | cut -d' ' -f1
 }
 
+# .harness/paths 목록에 속한 경로인지
+is_harness_path() {
+  while IFS= read -r p; do
+    case "$p" in
+      ''|'#'*) continue ;;
+      */) case "$1" in "$p"*) return 0 ;; esac ;;
+      *) [ "$1" = "$p" ] && return 0 ;;
+    esac
+  done < "$(repo_root)/.harness/paths"
+  return 1
+}
+
+# `하네스 도입 승인` 기록이 30분 내이고 승인 시점 브랜치가 지금 브랜치와 같은지
+adopt_approved() {
+  f="$(state_dir)/adopt-approved"
+  [ -f "$f" ] && [ -n "$(find "$f" -mmin -30 2>/dev/null)" ] && [ "$(cat "$f")" = "$1" ]
+}
+
 deny() {
   echo "차단: $1" >&2
   exit 2

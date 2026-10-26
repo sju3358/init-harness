@@ -25,7 +25,7 @@ esac
 
 kind=other
 case "$rel" in
-  src/*|build.gradle|build.gradle.kts|settings.gradle|settings.gradle.kts|pom.xml|gradle/*|gradlew|gradlew.bat) kind=code ;;
+  src/*|*/src/main/*|*/src/test/*|build.gradle|build.gradle.kts|*/build.gradle|*/build.gradle.kts|settings.gradle|settings.gradle.kts|pom.xml|*/pom.xml|gradle/*|gradlew|gradlew.bat) kind=code ;;
   docs/requirements.md|docs/prd/*|docs/api/*) kind=prd ;;
 esac
 

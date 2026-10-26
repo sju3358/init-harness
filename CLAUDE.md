@@ -13,6 +13,7 @@
 | 요청 | 스킬 |
 | --- | --- |
 | 프로젝트 초기 셋팅, 스택 설정 | `project-init` |
+| 진행 중 프로젝트에 하네스 도입 | `harness-adopt` |
 | 요구사항 정리, Notion 기획서 읽기 | `req-gather` |
 | PRD 작성·보완 | `prd-write` |
 | API 문서 설계·수정, 프론트 전달용 문서 | `api-design` |

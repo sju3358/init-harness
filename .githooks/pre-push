@@ -1,19 +1,31 @@
 #!/bin/sh
 # 보호 브랜치(main·master·통합 브랜치) push 차단. PR·병합은 사람이 원격에서 처리
+# 예외: `하네스 도입 승인`(30분, 승인 브랜치 한정)이 있으면 그 브랜치 push 1회 허용 후 승인 기록 삭제
 # 사람이 직접 보호 브랜치에 push해야 하면 `git push --no-verify` 사용
 
 root=$(git rev-parse --show-toplevel)
 integration=$(sed -n 's/^- 통합 브랜치:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$root/docs/project.md" 2>/dev/null | head -n 1)
 integration=${integration:-develop}
+adopt="$root/.harness/state/adopt-approved"
 
+adopt_ok() {
+  [ -f "$adopt" ] && [ -n "$(find "$adopt" -mmin -30 2>/dev/null)" ] && [ "$(cat "$adopt")" = "$1" ]
+}
+
+used_adopt=0
 while read -r _local_ref _local_sha remote_ref _remote_sha; do
   branch=${remote_ref#refs/heads/}
   case "$branch" in
     main|master|"$integration")
+      if adopt_ok "$branch"; then
+        used_adopt=1
+        continue
+      fi
       echo "pre-push: 보호 브랜치($branch) push 차단. feature 브랜치를 push하고 PR로 병합" >&2
       exit 1
       ;;
   esac
 done
 
+[ "$used_adopt" = 1 ] && rm -f "$adopt" && echo "pre-push: 하네스 도입 예외로 push 허용. 승인 기록 삭제" >&2
 exit 0
