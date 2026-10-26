@@ -1,6 +1,6 @@
 ---
 name: feature-start
-description: 승인된 PRD의 feature 목록에서 하나를 골라 ITD 티켓 브랜치(feat/ITD-####)와 작업 폴더(artifacts/work/F-##/)를 만든다. "feature 시작", "F-01 시작", "다음 기능 진행" 요청에 쓴다.
+description: 승인된 PRD의 feature 목록에서 하나를 골라 ITD 티켓 브랜치(feat/ITD-####)와 작업 폴더(artifacts/work/F-##/)를 만든다. "feature 시작", "F-01 시작", "다음 기능 진행" 요청에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
 ---
 
 # feature 시작
@@ -26,3 +26,8 @@ description: 승인된 PRD의 feature 목록에서 하나를 골라 ITD 티켓 �
 ## 4. 보고
 
 브랜치명, 대상 feature와 REQ 목록, 다음 단계(`feature-plan`)를 보고한다.
+
+## Claude 대행
+
+- 1~3단계를 그대로 하되, 작업 폴더는 템플릿 복사(`cp -R artifacts/work/_template artifacts/work/F-##`)와 `HANDOFF.md` 채우기까지만 한다. `PLAN.md`는 복사만 하고 내용을 쓰지 않는다(Claude의 `PLAN.md` 편집은 훅이 차단).
+- `HANDOFF.md` "대행 기록"에 남기고, 다음 행동을 Codex `feature-plan`으로 적는다.

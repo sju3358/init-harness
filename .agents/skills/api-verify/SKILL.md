@@ -1,6 +1,6 @@
 ---
 name: api-verify
-description: 구현된 컨트롤러·DTO·예외 처리가 API 문서(docs/api/*.md)와 일치하는지 검증한다. 엔드포인트 목록은 check-api.mjs로 기계 비교하고, 파라미터·필드·에러 코드는 verifier 에이전트(mode=api)가 대조한다. "API 검증", "API 문서와 코드 대조" 요청과 doc-code-verify 다음 단계에 쓴다.
+description: 구현된 컨트롤러·DTO·예외 처리가 API 문서(docs/api/*.md)와 일치하는지 검증한다. 엔드포인트 목록은 check-api.mjs로 기계 비교하고, 파라미터·필드·에러 코드는 verifier 에이전트(mode=api)가 대조한다. "API 검증", "API 문서와 코드 대조" 요청과 doc-code-verify 다음 단계에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
 ---
 
 # API 문서-코드 검증
@@ -31,3 +31,11 @@ API 문서는 프론트엔드가 그대로 믿고 개발하는 계약이다. 문
 - 문서가 틀렸거나 빠짐(구현 중 정당한 이유로 바뀌어야 함): 코드를 문서와 다르게 둔 채 넘어가지 않는다. `HANDOFF.md` "PRD 변경 요청"에 대상 `API-###`와 바꿀 내용을 적고 멈춘다(Claude `prd-change` → `api-design`).
 - 보고에는 `확인 못한 부분`과 `해석 불가` 항목을 생략 없이 넣는다.
 - 정리되면 `HANDOFF.md` 다음 행동을 `test-write`로 갱신한다.
+
+## Claude 대행
+
+Codex를 쓸 수 없어 사용자가 Claude에게 대행을 요청한 경우(`docs/rules/workflow.md` "대행 작업").
+
+- `verifier` 대신 `code-verifier` 에이전트를 `mode=api`로 실행한다. 메인 세션 재검증은 그대로 한다.
+- 빌드·테스트·검사 스크립트는 실행해도 된다. 소스·테스트·`PLAN.md`는 고치지 않는다(훅이 차단).
+- `수정 필요`가 나와도 `implement`·`test-write`로 돌아가지 않는다. `API-VERIFY.md`에 판정을 남기고, `HANDOFF.md` "대행 기록"의 "원래 담당이 할 일"에 수정 항목을 적은 뒤 멈춘다.

@@ -2,7 +2,7 @@
 # PreToolUse(Edit|Write) 훅: 역할 분리와 계획 승인 게이트를 파일 편집에서 강제
 # 사용법: edit-guard.sh claude|codex (stdin: 도구 입력 JSON)
 #   공통: .harness/state/(승인 기록) 편집 차단
-#   claude: 소스·빌드 파일 편집 차단 (기획·문서 전용)
+#   claude: 소스·빌드 파일·PLAN.md 편집 차단 (기획·문서 전용, 대행 중에도 Codex 결과물 보호)
 #   codex: 요구사항·PRD·API 문서 편집 차단, 소스·빌드 파일은 작업 브랜치 + 계획 승인 기록이 있을 때만 허용
 
 dir=$(dirname "$0")
@@ -29,8 +29,13 @@ case "$rel" in
   docs/requirements.md|docs/prd/*|docs/api/*) kind=prd ;;
 esac
 
+case "$rel" in
+  artifacts/work/*/PLAN.md) [ "$agent" = claude ] && kind=plan ;;
+esac
+
 if [ "$agent" = claude ]; then
   [ "$kind" = code ] && deny "Claude는 기획·문서 전용. 소스·빌드 파일($rel)은 Codex가 구현 (CLAUDE.md)"
+  [ "$kind" = plan ] && deny "PLAN.md는 Codex 영역. 대행 중에도 계획은 바꾸지 않음. 필요한 내용은 HANDOFF.md에 기록 (docs/rules/workflow.md 대행 작업)"
   exit 0
 fi
 

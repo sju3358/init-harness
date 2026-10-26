@@ -31,6 +31,8 @@ rm -rf .git && git init -b main      # 하네스 이력을 끊고 프로젝트 �
 
 절차와 승인 게이트의 단일 원본은 [docs/rules/workflow.md](docs/rules/workflow.md)다.
 
+한쪽 도구의 토큰이 부족하면 다른 도구가 상대 결과물을 바꾸지 않는 작업(커밋·push, 검사·테스트 실행, 검증 판정, 인계 정리 등)을 대신한다. 범위는 `workflow.md` "대행 작업".
+
 ## 승인 게이트
 
 | 게이트 | 사용자가 입력할 문구 | 강제 방식 |

@@ -1,6 +1,6 @@
 ---
 name: prd-verify
-description: 요구사항 명세(Notion·대화에서 도출)와 작성된 PRD·API 문서 사이의 정합성을 prd-verifier 에이전트(새 컨텍스트)로 검증하고, 결과를 재확인해 보고한 뒤 PRD 승인 게이트를 진행한다. "PRD 검증", "정합성 확인", "PRD 승인" 요청에 쓴다.
+description: 요구사항 명세(Notion·대화에서 도출)와 작성된 PRD·API 문서 사이의 정합성을 prd-verifier 에이전트(새 컨텍스트)로 검증하고, 결과를 재확인해 보고한 뒤 PRD 승인 게이트를 진행한다. "PRD 검증", "정합성 확인", "PRD 승인" 요청에 쓴다. Claude를 쓸 수 없을 때 Codex가 대행할 수 있다.
 ---
 
 # PRD 검증과 승인
@@ -32,3 +32,11 @@ description: 요구사항 명세(Notion·대화에서 도출)와 작성된 PRD·
 - 사용자에게 `PRD 승인`을 한 줄로 입력하도록 안내한다. 다른 표현은 승인으로 보지 않는다.
 - 승인 기록이 생기면(훅 메시지 확인) `00-overview.md`·`requirements.md`·`docs/api/README.md`의 `- 상태:` 줄을 `승인 vX.Y (YYYY-MM-DD)`로 바꾼다. 상태 줄 외에는 아무것도 고치지 않는다(다른 내용이 바뀌면 승인 해시가 깨져 재승인 필요). `sh .harness/hooks/prd-check.sh`로 승인 유효를 확인한다.
 - 커밋은 `itd-commit`으로 한다.
+
+## Codex 대행
+
+Claude를 쓸 수 없어 사용자가 Codex에게 대행을 요청한 경우(`docs/rules/workflow.md` "대행 작업").
+
+- `prd-verifier` 대신 `verifier` 에이전트를 `mode=prd`로 실행한다. 2단계 재확인은 그대로 한다.
+- 요구사항·PRD·API 문서는 고치지 않는다(훅이 차단). 3단계 수정 루프는 하지 않고 `수정 필요`·`사람 승인 필요`를 사용자에게 보고한 뒤, 작업 브랜치의 `HANDOFF.md`(없으면 보고만)에 "원래 담당이 할 일"로 남긴다.
+- 결론이 `승인 가능`이면 4단계 승인 요청까지 할 수 있다. `PRD 승인` 기록은 훅이 남기며, 문서의 상태 줄 갱신은 Claude가 다음 세션에서 한다(상태 줄은 승인 해시에서 제외되므로 Codex 작업은 바로 진행 가능).

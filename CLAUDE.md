@@ -23,3 +23,7 @@
 
 - 사용자 확인은 `AskUserQuestion`, 멀티스텝 작업은 할 일 목록에 먼저 등록한다.
 - 검증은 작성한 세션이 아니라 `prd-verifier` 에이전트(새 컨텍스트)가 한다. 작성자가 자기 결과를 "검증 완료"로 보고하지 않는다.
+
+## Codex 대행
+
+Codex를 쓸 수 없을 때 사용자가 요청하면 `docs/rules/workflow.md` "대행 작업" 범위에서만 대신한다. 커밋·push(`itd-commit`), 검사·빌드·테스트 실행, 검증 판정(`doc-code-verify`·`api-verify`·`test-verify`, 에이전트는 `code-verifier`), `feature-start` 준비, 충돌 없는 통합 브랜치 반영이 해당한다. 코드·테스트·`PLAN.md`는 대행 중에도 고치지 않고, 한 일은 `HANDOFF.md` "대행 기록"에 남긴다.

@@ -1,6 +1,6 @@
 ---
 name: test-verify
-description: 테스트를 실행하고, verifier 에이전트로 테스트가 인수 조건을 실제로 검증하는지(유효성) 판정해 TEST-REPORT.md와 요구사항 추적표를 갱신한다. "테스트 검증", "테스트 돌려", "검증 리포트" 요청에 쓴다.
+description: 테스트를 실행하고, verifier 에이전트로 테스트가 인수 조건을 실제로 검증하는지(유효성) 판정해 TEST-REPORT.md와 요구사항 추적표를 갱신한다. "테스트 검증", "테스트 돌려", "검증 리포트" 요청에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
 ---
 
 # 테스트 검증
@@ -25,3 +25,11 @@ description: 테스트를 실행하고, verifier 에이전트로 테스트가 �
 
 - 요약 보고: 테스트 결과 수, TC별 유효성, `확인 못한 부분`, 남은 `PRD 변경 요청`.
 - 남은 문제가 없으면 `HANDOFF.md` 상태를 갱신하고 `itd-commit`으로 넘어간다.
+
+## Claude 대행
+
+Codex를 쓸 수 없어 사용자가 Claude에게 대행을 요청한 경우(`docs/rules/workflow.md` "대행 작업").
+
+- `verifier` 대신 `code-verifier` 에이전트를 `mode=test`로 실행한다. 메인 세션 재검증은 그대로 한다.
+- 빌드·테스트·검사 스크립트는 실행해도 된다. 소스·테스트·`PLAN.md`는 고치지 않는다(훅이 차단).
+- `수정 필요`가 나와도 `implement`·`test-write`로 돌아가지 않는다. `TEST-REPORT.md`에 판정을 남기고, `HANDOFF.md` "대행 기록"의 "원래 담당이 할 일"에 수정 항목을 적은 뒤 멈춘다.

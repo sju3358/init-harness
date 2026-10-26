@@ -1,6 +1,6 @@
 ---
 name: doc-code-verify
-description: 구현된 코드가 PRD 기능 명세·공통 사항·개발계획과 일치하는지 verifier 에이전트(새 컨텍스트)로 검증하고 메인 세션이 위험 항목을 재현 확인한다. "정합성 검증", "문서와 코드 대조", "구현 검증" 요청에 쓴다.
+description: 구현된 코드가 PRD 기능 명세·공통 사항·개발계획과 일치하는지 verifier 에이전트(새 컨텍스트)로 검증하고 메인 세션이 위험 항목을 재현 확인한다. "정합성 검증", "문서와 코드 대조", "구현 검증" 요청에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
 ---
 
 # 문서-코드 정합성 검증
@@ -27,3 +27,11 @@ verifier 결과를 그대로 보고하지 않는다. 아래에 해당하는 항�
 - PRD 문제: `HANDOFF.md` "PRD 변경 요청".
 - 보고에는 `확인 못한 부분`을 `일치`와 같은 비중으로 생략 없이 넣는다.
 - 모두 정리되면 `HANDOFF.md` 다음 행동을 `api-verify`로 갱신한다(이 feature에 API가 없으면 `test-write`).
+
+## Claude 대행
+
+Codex를 쓸 수 없어 사용자가 Claude에게 대행을 요청한 경우(`docs/rules/workflow.md` "대행 작업").
+
+- `verifier` 대신 `code-verifier` 에이전트를 `mode=code`로 실행한다. 메인 세션 재검증은 그대로 한다.
+- 빌드·테스트·검사 스크립트는 실행해도 된다. 소스·테스트·`PLAN.md`는 고치지 않는다(훅이 차단).
+- `수정 필요`가 나와도 `implement`·`test-write`로 돌아가지 않는다. `VERIFY.md`에 판정을 남기고, `HANDOFF.md` "대행 기록"의 "원래 담당이 할 일"에 수정 항목을 적은 뒤 멈춘다.

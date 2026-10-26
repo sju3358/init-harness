@@ -18,4 +18,5 @@
 | 커밋·푸시 | `itd-commit` |
 
 - 계획은 `planner`, 검증은 `verifier` 에이전트(`.codex/agents/`)에게 맡긴다. 구현한 세션이 자기 코드를 "검증 완료"로 보고하지 않는다.
+- Claude를 쓸 수 없을 때 사용자가 요청하면 `docs/rules/workflow.md` "대행 작업" 범위에서만 대신한다. 문서 커밋·push(`itd-commit`), `check-trace.sh prd` 실행, PRD 검증 판정(`prd-verify`, 에이전트는 `verifier` mode=prd), API 변경 요약 작성이 해당한다. 요구사항·PRD·API 문서는 대행 중에도 고치지 않고, 한 일은 `HANDOFF.md` "대행 기록"에 남긴다.
 - 파일은 에디터 도구(apply_patch)로만 편집한다. `sed -i`, `cat >`, `tee` 같은 셸 쓰기로 `src/`나 문서를 바꾸지 않는다(승인 게이트 우회가 됨).
