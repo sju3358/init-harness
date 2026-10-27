@@ -81,3 +81,7 @@ deny() {
   echo "차단: $1" >&2
   exit 2
 }
+
+# `하네스 OFF` 기록이 있으면 이 파일을 불러온 훅 전체 통과. `하네스 ON`으로 해제
+# record-approval.sh는 OFF 중에도 `하네스 ON`을 받아야 하므로 제외
+[ "${0##*/}" != record-approval.sh ] && [ -f "$(state_dir)/harness-off" ] && exit 0

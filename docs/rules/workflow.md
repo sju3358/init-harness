@@ -56,6 +56,7 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 | 푸시 승인 | `푸시 승인` | `.harness/state/git-approved`(30분) | `git push` |
 | 하네스 도입 (예외) | `하네스 도입 승인` | `.harness/state/adopt-approved`(30분, 승인 브랜치 한정, push 1회 후 삭제) | 보호 브랜치 커밋·push. 하네스 파일만 허용 |
 | 취소 | `승인 취소` | 현재 브랜치 계획 승인·git 승인·도입 승인 삭제 | - |
+| 하네스 끄기·켜기 | `하네스 OFF` / `하네스 ON` | `.harness/state/harness-off` (`하네스 ON`까지 유지) | OFF 중에는 위 게이트와 훅 차단 전부 해제 |
 
 - 기록은 `.harness/hooks/record-approval.sh`(UserPromptSubmit)가 사용자 문장에서만 만든다. 에이전트는 `.harness/state/`를 직접 만들거나 지우지 않는다(`approval-gate` 훅이 차단).
 - 에이전트는 승인이 필요한 시점에 멈추고, 무엇을 승인하는지 요약한 뒤 입력할 문구를 안내한다. "진행해", "ㄱㄱ" 같은 일반 응답은 승인 문구가 아니므로 문구를 다시 안내한다.

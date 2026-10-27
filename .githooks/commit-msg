@@ -2,6 +2,8 @@
 # 작업 브랜치(feat|fix|docs/ITD-####)의 커밋 제목을 `{종류}/ITD-#### 제목` 형식으로 강제하고 브랜치 티켓과 대조
 # 보호 브랜치의 사람 커밋(초기 셋팅 등)과 병합·되돌리기 커밋은 검사하지 않음
 
+[ -f "$(git rev-parse --show-toplevel)/.harness/state/harness-off" ] && exit 0
+
 msg_file=$1
 title=$(grep -v '^#' "$msg_file" | sed -n '1p')
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)

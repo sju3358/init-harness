@@ -3,7 +3,7 @@
 # 승인 기록은 사용자 프롬프트에서만 생기므로 에이전트가 스스로 게이트를 통과할 수 없음
 # 문장 속 언급("계획 승인 전에 뭐 해?")은 오탐이라 줄 전체가 문구일 때만 인정
 #
-# 문구: PRD 승인 · 계획 승인 · 커밋 승인 · 푸시 승인 · 커밋 푸시 승인 · 하네스 도입 승인 · 하네스 업데이트 승인 · 승인 취소
+# 문구: PRD 승인 · 계획 승인 · 커밋 승인 · 푸시 승인 · 커밋 푸시 승인 · 하네스 도입 승인 · 하네스 업데이트 승인 · 승인 취소 · 하네스 OFF · 하네스 ON
 
 dir=$(dirname "$0")
 . "$dir/lib.sh"
@@ -24,6 +24,16 @@ mkdir -p "$state"
 if has '승인 취소'; then
   rm -f "$state/plan-approved--$key" "$state/git-approved" "$state/adopt-approved"
   echo "승인 기록 삭제: 계획 승인($branch), 커밋·푸시 승인, 하네스 도입 승인"
+fi
+
+if has '하네스 OFF'; then
+  date '+%Y-%m-%dT%H:%M:%S' > "$state/harness-off"
+  echo "기록: 하네스 OFF. '하네스 ON' 입력 전까지 Claude·Codex 훅과 Git 훅(commit-msg·pre-push)의 승인 게이트·차단이 모두 꺼짐."
+fi
+
+if has '하네스 ON'; then
+  rm -f "$state/harness-off"
+  echo "기록: 하네스 ON. 승인 게이트·차단 다시 적용."
 fi
 
 if has '하네스 도입 승인|하네스 업데이트 승인'; then
