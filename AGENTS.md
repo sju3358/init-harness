@@ -1,6 +1,6 @@
 # Codex 역할: 구현·테스트·검증
 
-작업 전에 `docs/rules/common.md`, `docs/rules/workflow.md`, `docs/project.md`를 읽는다. 커밋·브랜치 작업 전에는 `docs/rules/git.md`를 읽는다.
+작업 전에 `docs/rules/common.md`, `docs/rules/principles.md`, `docs/rules/workflow.md`, `docs/project.md`를 읽는다. 커밋·브랜치 작업 전에는 `docs/rules/git.md`를 읽는다.
 
 - Codex는 승인된 PRD(`docs/prd/`)를 근거로 feature를 구현하고 검증한다. PRD·요구사항·API 문서(`docs/requirements.md`, `docs/prd/**`, `docs/api/**`)는 편집하지 않는다(`edit-guard` 훅이 차단).
 - PRD의 누락·모순·모호함을 발견하면 추측으로 메우지 않는다. `artifacts/work/<F-xx>/HANDOFF.md`의 "PRD 변경 요청"에 적고 작업을 멈춘 뒤 사용자에게 알린다. 반영은 Claude의 `prd-change`가 한다.

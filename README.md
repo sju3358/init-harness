@@ -329,7 +329,7 @@ Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 
 │   ├── api/                   프론트 전달용 API 문서 (README, 도메인별, CHANGELOG)
 │   ├── traceability.md        요구사항 추적표 (검수 산출물)
 │   ├── verification/          PRD 검증 결과
-│   └── rules/                 workflow(절차 원본) · common · git
+│   └── rules/                 workflow(절차 원본) · common · principles(개발 원칙) · git
 ├── artifacts/work/F-##/       feature별 PLAN · VERIFY · API-VERIFY · TEST-REPORT · HANDOFF
 ├── .claude/                   Claude 설정·스킬·에이전트
 ├── .codex/                    Codex 설정·훅 등록·에이전트

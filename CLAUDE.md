@@ -1,5 +1,7 @@
 @docs/rules/common.md
 
+@docs/rules/principles.md
+
 @docs/rules/workflow.md
 
 @docs/project.md
