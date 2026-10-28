@@ -16,11 +16,11 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/git-safety-guard.sh\""
+						"command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/codex-tool-adapter.mjs\" git-safety-guard"
 					},
 					{
 						"type": "command",
-						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/approval-gate.sh\""
+						"command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/codex-tool-adapter.mjs\" approval-gate"
 					}
 				]
 			},

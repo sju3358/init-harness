@@ -3,6 +3,7 @@
 // - apply_patch: tool_input.command의 패치를 파일별 Write(추가)·Edit(hunk 단위 수정)·Delete 입력으로 분해
 // - spawn_agent: tool_input.agent_type을 subagent_type으로 복사
 // - Codex PreToolUse는 permissionDecision "ask"를 지원하지 않아 "deny"로 변환
+// - 차단(exit 2)은 permissionDecision "deny" JSON으로 반환. code mode(exec) 안의 중첩 호출은 exit 2를 무시함
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -98,7 +99,8 @@ function askToDeny(stdout) {
 const [hook, ...hookArgs] = process.argv.slice(2);
 let input;
 try {
-  input = JSON.parse(readFileSync(0, "utf8") || "{}");
+  // Windows PowerShell 5.1 파이프는 입력 앞에 BOM을 붙여 JSON.parse가 실패하므로 제거
+  input = JSON.parse(readFileSync(0, "utf8").replace(/^﻿/, "") || "{}");
 } catch {
   // 입력을 해석할 수 없으면 원본 훅과 같이 통과시킴
   process.exit(0);
@@ -110,7 +112,17 @@ for (const call of toCalls(input)) {
     encoding: "utf8",
   });
   process.stderr.write(result.stderr ?? "");
-  if (result.status === 2) process.exit(2);
+  if (result.status === 2) {
+    // 중첩 도구 호출에서도 거부가 전달되도록 종료 코드 대신 명시적인 판정을 반환
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: result.stderr?.trim() || "하네스 훅이 도구 호출을 차단했습니다.",
+      },
+    }));
+    process.exit(0);
+  }
   const stdout = askToDeny(result.stdout ?? "");
   // 첫 판정 출력만 전달해 여러 JSON이 이어 붙지 않도록 함
   if (stdout.trim()) {
