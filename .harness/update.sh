@@ -29,8 +29,9 @@ mkdir -p "$out/seed"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
+# 파일·링크의 모드. 디렉터리(tree)는 빈 값이라, 구버전 링크 자리가 새 버전에서 디렉터리가 되면 링크 삭제로 처리됨
 mode_of() {
-  git -C "$src" ls-tree "$1" -- "$2" | awk '{print $1}'
+  git -C "$src" ls-tree "$1" -- "$2" | awk '$2 != "tree" {print $1}'
 }
 show() {
   git -C "$src" show "$1:$2" > "$3" 2>/dev/null
@@ -65,7 +66,14 @@ while IFS= read -r p; do
   # 새 버전에서 삭제된 파일: 프로젝트가 고치지 않았을 때만 삭제
   if [ -z "$nm" ]; then
     [ -e "$p" ] || [ -L "$p" ] || continue
-    if show "$base" "$p" "$tmp/b" && cmp -s "$p" "$tmp/b"; then
+    if [ "$bm" = 120000 ]; then
+      # 링크는 Windows(core.symlinks=false)에서 대상 경로를 담은 일반 파일로 체크아웃됨. 링크를 따라가 대상을 지우지 않도록 대상 경로로 비교
+      if [ "$(readlink "$p" 2>/dev/null || tr -d '\r' < "$p" 2>/dev/null)" = "$(git -C "$src" show "$base:$p")" ]; then
+        rm -f "$p" && log 삭제 "$p"
+      else
+        log 삭제보류 "$p (새 버전에서 삭제된 링크지만 프로젝트에서 바뀜)"
+      fi
+    elif show "$base" "$p" "$tmp/b" && tr -d '\r' < "$p" | cmp -s - "$tmp/b"; then
       rm -f "$p" && log 삭제 "$p"
     else
       log 삭제보류 "$p (새 버전에서 삭제됐지만 프로젝트에서 고친 파일)"
@@ -73,7 +81,13 @@ while IFS= read -r p; do
     continue
   fi
 
-  mkdir -p "$(dirname "$p")"
+  # 상위 경로가 링크(삭제보류된 구버전 링크 등)면 링크 대상에 쓰게 되므로 멈춤
+  d=$(dirname "$p")
+  if [ -L "$d" ] || { [ -e "$d" ] && [ ! -d "$d" ]; }; then
+    log 충돌 "$p (상위 경로 ${d}가 링크 또는 파일. 정리 후 다시 실행)"
+    continue
+  fi
+  mkdir -p "$d"
   if [ "$nm" = 120000 ]; then
     target=$(git -C "$src" show "$new:$p")
     if [ "$(readlink "$p" 2>/dev/null)" != "$target" ]; then
@@ -83,15 +97,17 @@ while IFS= read -r p; do
   fi
 
   show "$new" "$p" "$tmp/n"
+  # Windows(core.autocrlf=true)에서 CRLF로 체크아웃된 파일도 같은 내용으로 보도록 CR을 빼고 비교. 결과는 LF로 씀
+  [ -f "$p" ] && tr -d '\r' < "$p" > "$tmp/p"
   if [ ! -e "$p" ]; then
     cp "$tmp/n" "$p" && log 추가 "$p"
-  elif cmp -s "$p" "$tmp/n"; then
-    :
-  elif [ -n "$bm" ] && show "$base" "$p" "$tmp/b" && cmp -s "$p" "$tmp/b"; then
+  elif cmp -s "$tmp/p" "$tmp/n"; then
+    cmp -s "$p" "$tmp/n" || { cp "$tmp/n" "$p" && log 줄바꿈 "$p"; }
+  elif [ -n "$bm" ] && show "$base" "$p" "$tmp/b" && cmp -s "$tmp/p" "$tmp/b"; then
     cp "$tmp/n" "$p" && log 갱신 "$p"
   else
     [ -n "$bm" ] && show "$base" "$p" "$tmp/b" || : > "$tmp/b"
-    git merge-file -p -L 프로젝트 -L "기준 ${base%"${base#???????}"}" -L "새버전 ${new%"${new#???????}"}" "$p" "$tmp/b" "$tmp/n" > "$tmp/m"
+    git merge-file -p -L 프로젝트 -L "기준 ${base%"${base#???????}"}" -L "새버전 ${new%"${new#???????}"}" "$tmp/p" "$tmp/b" "$tmp/n" > "$tmp/m"
     rc=$?
     cp "$tmp/m" "$p"
     if [ "$rc" -eq 0 ]; then log 병합 "$p"; else log 충돌 "$p (${rc}곳)"; fi
@@ -103,7 +119,7 @@ printf '%s\n' "$new" > .harness/version
 
 {
   echo "하네스 업데이트: ${base%"${base#???????}"} → ${new%"${new#???????}"}"
-  for k in 추가 갱신 병합 충돌 링크 삭제 삭제보류 템플릿변경; do
+  for k in 추가 갱신 병합 충돌 링크 삭제 삭제보류 줄바꿈 템플릿변경; do
     n=$(awk -F'\t' -v k="$k" '$1 == k' "$out/list.tsv" 2>/dev/null | grep -c .)
     [ "$n" -gt 0 ] || continue
     echo

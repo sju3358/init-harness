@@ -8,6 +8,12 @@
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
+# jq가 없으면 프롬프트를 읽지 못해 승인 문구가 조용히 무시되므로 알림
+if ! command -v jq >/dev/null 2>&1; then
+  echo "하네스: jq 미설치로 승인 문구를 기록하지 못함. 사용자에게 jq 설치 후 세션 재시작을 안내할 것 (Windows: winget install jqlang.jq, macOS: brew install jq)"
+  exit 0
+fi
+
 prompt=$(sh "$dir/user-prompt-text.sh")
 [ -n "$prompt" ] || exit 0
 

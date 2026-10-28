@@ -33,7 +33,7 @@
 - `git reset --hard`, `git clean -f/-d/-x`, `git branch -D`, 경로 없는 `git checkout -- .`
 - bare `git stash`, `git stash pop` (태그 붙인 `git stash push -m`과 `apply <sha>`는 허용)
 - `git push --force`/`-f` (`--force-with-lease`도 사용자 승인 후 사용자가 직접 실행)
-- `pkill`, `killall` (포트로 지정해 종료)
+- `pkill`, `killall`, Windows `taskkill /IM`, `Stop-Process -Name` (포트로 지정해 종료)
 - 승인 기록 없는 `git commit`, `git push`
 - 보호 브랜치 커밋·push (예외: `harness-adopt`의 `하네스 도입 승인`, 하네스 파일만. `workflow.md` "예외" 참고)
 

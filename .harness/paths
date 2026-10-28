@@ -3,6 +3,7 @@
 CLAUDE.md
 AGENTS.md
 .gitignore
+.gitattributes
 .claude/
 .codex/
 .agents/

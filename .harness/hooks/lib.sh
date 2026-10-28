@@ -5,6 +5,30 @@ repo_root() {
   git rev-parse --show-toplevel 2>/dev/null || pwd
 }
 
+# 도구 입력 경로를 저장소 기준 상대 경로로 출력. 저장소 밖 절대 경로면 빈 값
+# Windows는 역슬래시·드라이브 문자 대소문자·/d/ 형식이 섞여 들어오므로 cygpath로 맞춘 뒤 대소문자 무시로 비교
+rel_path() {
+  p=$1
+  root=$(repo_root)
+  if command -v cygpath >/dev/null 2>&1; then
+    p=$(cygpath -m "$p")
+    root=$(cygpath -m "$root")
+  fi
+  case "$p" in
+    /*|[A-Za-z]:/*)
+      printf '%s\n%s\n' "$root" "$p" | awk '
+        NR == 1 { r = tolower($0) "/"; next }
+        index(tolower($0), r) == 1 { print substr($0, length(r) + 1) }' ;;
+    *) printf '%s' "${p#./}" ;;
+  esac
+}
+
+# 훅 입력 JSON 해석에 jq가 필요. 없으면 입력을 빈 값으로 읽어 모든 게이트가 조용히 통과하므로 차단
+require_jq() {
+  command -v jq >/dev/null 2>&1 \
+    || deny "jq 미설치로 하네스 훅이 동작하지 않음. 사용자가 설치 후 세션 재시작 (Windows: winget install jqlang.jq, macOS: brew install jq)"
+}
+
 current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
@@ -62,6 +86,7 @@ prd_hash() {
 # .harness/paths 목록에 속한 경로인지
 is_harness_path() {
   while IFS= read -r p; do
+    p=${p%"$(printf '\r')"}
     case "$p" in
       ''|'#'*) continue ;;
       */) case "$1" in "$p"*) return 0 ;; esac ;;

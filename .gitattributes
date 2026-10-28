@@ -1,0 +1,8 @@
+# 하네스 스크립트·목록·문서는 OS와 무관하게 LF로 체크아웃
+# Windows(core.autocrlf=true)에서 CRLF로 받으면 sh·grep이 줄 끝 CR을 값으로 읽어 경로·ID 비교가 어긋남
+*.sh text eol=lf
+*.mjs text eol=lf
+.githooks/* text eol=lf
+.harness/** text eol=lf
+docs/**/*.md text eol=lf
+artifacts/work/**/*.md text eol=lf

@@ -9,15 +9,12 @@ dir=$(dirname "$0")
 . "$dir/lib.sh"
 
 agent=$1
-path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null)
+require_jq
+path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null | tr -d '\r')
 [ -n "$path" ] || exit 0
 
-root=$(repo_root)
-case "$path" in
-  "$root"/*) rel=${path#"$root"/} ;;
-  /*) exit 0 ;;
-  *) rel=${path#./} ;;
-esac
+rel=$(rel_path "$path")
+[ -n "$rel" ] || exit 0
 
 case "$rel" in
   .harness/state/*) deny ".harness/state/는 사용자 승인 문구로만 기록됨 (docs/rules/workflow.md)" ;;

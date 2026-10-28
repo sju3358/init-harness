@@ -34,8 +34,9 @@ SI 프로젝트(보통 4~5일 단위)를 위한 **Claude·Codex 분업 하네스
 
 | 항목 | 내용 |
 | --- | --- |
-| OS | macOS 또는 Linux (훅이 POSIX `sh`와 심볼릭 링크를 사용) |
-| 도구 | `git`, `jq`, Node.js 18 이상, `rsync`(도입 시) |
+| OS | macOS, Linux, Windows (훅이 POSIX `sh`를 사용. Windows는 Git for Windows의 Git Bash) |
+| 도구 | `git`, `jq`, Node.js 18 이상. `jq`가 없으면 훅이 모든 도구를 차단합니다 |
+| Windows 설치 | `winget install Git.Git jqlang.jq OpenJS.NodeJS.LTS` 후 VS Code·터미널 재시작. Codex 훅은 `sh`를 직접 호출하므로 `C:\Program Files\Git\usr\bin`을 PATH에 추가 |
 | AI 도구 | Claude Code (Pro 이상), Codex (Plus 이상) |
 | 대상 스택 | Java + Spring Boot 기본. DB·메시지 큐 등은 프로젝트마다 `project-init`에서 결정 |
 
@@ -289,13 +290,13 @@ feat/ITD-1234 주문 조회 API 추가
 
 ## 11. 훅이 막는 것
 
-훅 스크립트는 `.harness/hooks/`에 있고, Claude와 Codex가 같은 스크립트를 씁니다.
+훅 스크립트는 `.harness/hooks/`에 있고, Claude와 Codex가 같은 스크립트를 씁니다. 셸 명령 훅은 Claude의 Bash·PowerShell 도구 모두에 걸립니다.
 
 | 훅 | 시점 | 막는 것 |
 | --- | --- | --- |
 | `edit-guard.sh` | 파일 편집 전 | Claude의 소스·빌드·`PLAN.md` 편집 / Codex의 요구사항·PRD·API 문서 편집 / 계획 승인 없는 소스 편집 / 작업 브랜치가 아닌 곳에서의 소스 편집 / 승인 기록 파일 편집 |
 | `approval-gate.sh` | 셸 명령 전 | 승인 없는 commit·push / 보호 브랜치 커밋 / 승인 기록 조작 / 하네스 예외 범위를 벗어난 커밋·push |
-| `git-safety-guard.sh` | 셸 명령 전 | `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`, 강제 push, bare `stash`·`stash pop`, `pkill`·`killall` |
+| `git-safety-guard.sh` | 셸 명령 전 | `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`, 강제 push, bare `stash`·`stash pop`, `pkill`·`killall`·`taskkill /IM`·`Stop-Process -Name` |
 | `record-approval.sh` | 사용자 입력 시 | (막지 않음) 승인 문구 기록 |
 | `.githooks/commit-msg` | 커밋 시 | 작업 브랜치에서 ITD 형식이 아니거나 티켓이 브랜치와 다른 커밋 |
 | `.githooks/pre-push` | push 시 | 보호 브랜치 push (하네스 예외 1회 제외) |
@@ -339,7 +340,7 @@ Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 
 ├── artifacts/work/F-##/       feature별 PLAN · VERIFY · API-VERIFY · TEST-REPORT · HANDOFF
 ├── .claude/                   Claude 설정·스킬·에이전트
 ├── .codex/                    Codex 설정·훅 등록·에이전트
-├── .agents/skills/            Codex 스킬 (일부는 .claude/skills와 링크로 공유)
+├── .agents/skills/            Codex 스킬 (공용 스킬은 원본 한 곳에 두고, 반대쪽에는 원본을 읽게 하는 위임 SKILL.md)
 ├── .harness/
 │   ├── hooks/                 공용 훅 스크립트
 │   ├── paths · seed           하네스 소유 경로 · 프로젝트가 채우는 문서 목록
@@ -369,6 +370,8 @@ Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 
 | --- | --- | --- |
 | "계획 승인 기록 없음"으로 편집 차단 | 현재 브랜치에 계획 승인이 없음 | `PLAN.md`를 확인하고 `계획 승인` 입력 |
 | 승인 문구를 입력했는데 반응이 없음 | 문장 안에 넣었거나, 작업 브랜치가 아니거나, 훅이 로드되지 않음 | 한 줄로 단독 입력. 브랜치 확인. 세션 재시작 |
+| 모든 도구가 "jq 미설치"로 차단 | `jq`가 PATH에 없음 | `jq` 설치 후 VS Code·터미널 재시작 ([1장](#1-요구-환경)) |
+| Windows에서 `.claude/skills/<이름>`이 한 줄짜리 파일 | 구버전(심볼릭 링크) 하네스를 `core.symlinks=false`로 받음 | "하네스 업데이트해줘"로 위임 스킬 버전으로 갱신 |
 | "PRD 승인 이후 내용이 바뀜" | 승인 후 요구사항·PRD·API 문서가 수정됨 | Claude에서 재검증 후 `PRD 승인` 다시 입력 |
 | 커밋·push가 "승인 기록 없음"으로 차단 | 승인 후 30분이 지남 | 다시 `커밋 승인`·`푸시 승인` 입력 |
 | main·develop push 차단 | 보호 브랜치 | 작업 브랜치에 push하고 PR로 병합. 사람이 꼭 직접 해야 하면 `git push --no-verify` |

@@ -9,11 +9,13 @@
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
-cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null)
+require_jq
+cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null | tr -d '\r')
 [ -n "$cmd" ] || exit 0
 exec_cmd=$(strip_cmd "$cmd")
 
-if printf '%s' "$cmd" | grep -q '\.harness/state'; then
+# PowerShell 명령은 경로를 역슬래시로 쓸 수 있음
+if printf '%s' "$cmd" | grep -q '\.harness[/\\]state'; then
   printf '%s' "$exec_cmd" | grep -qE '^[[:space:]]*(ls|cat)[[:space:]]' \
     || deny ".harness/state/는 사용자 승인 문구로만 기록됨. 에이전트가 직접 만들거나 지우지 않음 (docs/rules/workflow.md 승인 게이트)"
 fi

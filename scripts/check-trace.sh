@@ -51,9 +51,9 @@ check_prd() {
   req_file=docs/requirements.md
   [ -f "$req_file" ] || { echo "docs/requirements.md 없음"; exit 2; }
 
-  # 요구사항 표의 첫 칸 ID. 마지막 칸(상태)이 `삭제`인 행은 삭제로 분류
+  # 요구사항 표의 첫 칸 ID. 마지막 칸(상태)이 `삭제`인 행은 삭제로 분류 (CRLF 파일의 줄 끝 CR 허용)
   defined=$(grep -E '^\| *REQ-[0-9]+ *\|' "$req_file" | sed -E 's/^\| *(REQ-[0-9]+).*/\1/' | LC_ALL=C sort -u)
-  deleted=$(grep -E '^\| *REQ-[0-9]+ *\|' "$req_file" | grep -E '\| *삭제 *\| *$' | sed -E 's/^\| *(REQ-[0-9]+).*/\1/' | LC_ALL=C sort -u)
+  deleted=$(grep -E '^\| *REQ-[0-9]+ *\|' "$req_file" | grep -E '\| *삭제 *\|[[:space:]]*$' | sed -E 's/^\| *(REQ-[0-9]+).*/\1/' | LC_ALL=C sort -u)
   active=$(for id in $defined; do contains "$deleted" "$id" || echo "$id"; done)
 
   # shellcheck disable=SC2046

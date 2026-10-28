@@ -5,13 +5,18 @@
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
-cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null)
+require_jq
+cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null | tr -d '\r')
 [ -n "$cmd" ] || exit 0
 exec_cmd=$(strip_cmd "$cmd")
 
 # 이름 패턴 종료는 사용자가 띄운 서버 등 다른 프로세스까지 종료함
 if printf '%s' "$exec_cmd" | grep -qE '(^|[;&|(][[:space:]]*)(pkill|killall)\b'; then
   deny "pkill/killall 금지. 직접 띄운 서버는 포트로 지정해 종료: kill \$(lsof -ti tcp:<port>)"
+fi
+# Windows의 이름 지정 종료(taskkill /IM, Stop-Process -Name)도 같음
+if printf '%s' "$exec_cmd" | grep -qiE '(^|[;&|(][[:space:]]*)(taskkill[^;&|]*[[:space:]][/-]im\b|(stop-process|spps)[^;&|]*[[:space:]]-n(ame)?\b)'; then
+  deny "taskkill /IM, Stop-Process -Name 금지. 직접 띄운 서버는 포트로 지정해 종료: Stop-Process -Id (Get-NetTCPConnection -LocalPort <port>).OwningProcess"
 fi
 
 printf '%s' "$exec_cmd" | grep -qE '(^|[;&|(][[:space:]]*)git\b' || exit 0

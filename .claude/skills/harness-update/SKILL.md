@@ -13,6 +13,7 @@ description: 하네스가 이미 설치된 프로젝트(구버전 포함)에 최
 - 기준 버전(설치 당시 하네스 커밋)을 정한다.
   - `.harness/version`이 있으면 그 값
   - 없으면(초기 버전 설치 프로젝트) 사용자에게 묻는다. 모르면 `.harness/hooks/` 파일과 하네스 이력을 비교해 후보 커밋을 찾아 보여주고 확인받는다.
+- Windows에서는 Git Bash에서 실행하고, `jq`·`node`가 설치되어 있는지 확인한다. `jq`가 없으면 구버전 훅은 조용히 통과하고 새 버전 훅은 모든 도구를 막으며, 어느 쪽이든 `하네스 업데이트 승인`이 기록되지 않는다.
 - 대상 브랜치를 확인한다. 보호 브랜치(main 등)에 바로 반영하거나 작업 브랜치(`docs/ITD-####`)에서 PR로 반영할 수 있다. 사용자에게 고르게 한다.
 
 ## 1. 병합 실행
@@ -33,7 +34,11 @@ sh "$tmp/harness/.harness/update.sh" <기준 커밋|-> "$tmp/harness"
 | 병합 | 양쪽이 고친 파일, 자동 병합 성공 |
 | 충돌 | 양쪽이 같은 곳을 고침. 충돌 표시(`<<<<<<< 프로젝트`)가 파일에 남음 |
 | 삭제보류 | 새 버전에서 없어졌지만 프로젝트가 고친 파일. 그대로 둠 |
+| 줄바꿈 | 내용은 같고 CRLF로 체크아웃돼 있던 파일. LF로 다시 씀 (Windows) |
 | 템플릿변경 | 프로젝트 문서(`.harness/seed`)의 템플릿이 바뀜. diff만 남음 |
+
+- 구버전(심볼릭 링크로 스킬을 공유하던 버전)에서 올리면 링크 6개가 `삭제`, 같은 위치의 `<스킬>/SKILL.md`가 `추가`로 나온다. 맥에서는 링크만 지우고 링크 대상(원본 스킬)은 건드리지 않는다.
+- `충돌 … 상위 경로가 링크 또는 파일`이 나오면 그 링크가 `삭제보류`된 것이다. 사용자에게 보여주고 링크를 지운 뒤 같은 기준 커밋으로 다시 실행한다.
 
 ## 2. 충돌 정리
 
@@ -54,6 +59,7 @@ jq empty .claude/settings.json .codex/hooks.json
 for f in .harness/hooks/*.sh .githooks/* scripts/*.sh; do sh -n "$f" || echo "문법 오류: $f"; done
 node --check .harness/hooks/codex-tool-adapter.mjs scripts/check-api.mjs
 git config core.hooksPath
+git ls-files -s | grep '^120000'   # 하네스가 남긴 심볼릭 링크가 없어야 함(출력 없음)
 ```
 
 - 실패하면 원인을 고친다. 고칠 수 없으면 커밋하지 않고 보고한다.

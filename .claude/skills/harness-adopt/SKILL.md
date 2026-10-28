@@ -19,12 +19,19 @@ description: 하네스가 없는 진행 중 프로젝트에 하네스를 도입�
 ```bash
 tmp=$(mktemp -d)
 git clone --depth 1 https://github.com/sju3358/init-harness.git "$tmp/harness"
-rsync -a --ignore-existing --exclude .git --exclude README.md "$tmp/harness/" ./
+# 기존 파일은 덮어쓰지 않음. git에서 직접 꺼내 OS 줄바꿈 설정과 무관하게 LF로 씀 (Windows Git Bash에는 rsync가 없음)
+git -C "$tmp/harness" ls-files | while IFS= read -r p; do
+  [ "$p" = README.md ] && continue
+  if [ -e "$p" ]; then echo "건너뜀: $p"; continue; fi
+  mkdir -p "$(dirname "$p")" && git -C "$tmp/harness" show "HEAD:$p" > "$p"
+done
+chmod +x .githooks/* .harness/hooks/*.sh .harness/update.sh scripts/*.sh
 git -C "$tmp/harness" rev-parse HEAD > .harness/version   # 이후 harness-update의 기준 버전
 rm -rf "$tmp"
 ```
 
-- `--ignore-existing`라 기존 파일은 덮어쓰지 않는다. 복사 후 하네스 원본과 내용이 달라 건너뛴 파일 목록을 만든다(`CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`, `.gitignore`, `docs/` 하위 등).
+- 기존 파일은 덮어쓰지 않는다. `건너뜀` 목록 중 하네스 원본과 내용이 다른 파일을 2단계에서 병합한다(`CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`, `.gitignore`, `.gitattributes`, `docs/` 하위 등).
+- Windows에서는 Git Bash에서 실행한다. `jq`가 없으면 훅이 모든 도구를 차단하므로 먼저 설치되어 있는지 확인한다.
 
 ## 2. 충돌 파일 병합
 
@@ -34,6 +41,7 @@ rm -rf "$tmp"
 | `.claude/settings.json` | 기존 `permissions`를 유지하고 하네스 `hooks`·`model`·허용 목록을 합침. JSON 유효성 확인 |
 | `.codex/config.toml`, `.codex/hooks.json` | 기존 설정 유지, 하네스 항목 추가 |
 | `.gitignore` | `.harness/state/` 줄 추가 |
+| `.gitattributes` | 하네스 원본의 `eol=lf` 줄을 끝에 추가. 기존 줄과 같은 패턴을 다르게 지정하고 있으면 보고하고 사용자가 정함 |
 | Git 훅 | `core.hooksPath`가 없으면 `git config core.hooksPath .githooks`. Husky 등 기존 훅이 있으면 기존 훅 파일 끝에 `.githooks/commit-msg "$1"`, `.githooks/pre-push "$@"` 호출을 추가 |
 
 - 기존 프로젝트 파일(소스, 기존 문서)은 고치지 않는다. 고쳐야 할 것 같으면 도입 후 작업으로 보고한다.
