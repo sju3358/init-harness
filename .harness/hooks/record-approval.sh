@@ -52,8 +52,13 @@ if has '하네스 도입 승인|하네스 업데이트 승인'; then
 fi
 
 if has 'PRD 승인'; then
-  prd_hash > "$state/prd-approved"
-  echo "승인 기록: PRD 승인 (요구사항·PRD·API 문서 해시 저장). 이후 docs/requirements.md·docs/prd/·docs/api/ 내용이 바뀌면 다시 승인 필요."
+  hash=$(prd_hash)
+  if [ -n "$hash" ]; then
+    printf '%s\n' "$hash" > "$state/prd-approved"
+    echo "승인 기록: PRD 승인 (요구사항·PRD·API 문서 해시 저장). 이후 docs/requirements.md·docs/prd/·docs/api/ 내용이 바뀌면 다시 승인 필요."
+  else
+    echo "PRD 승인 기록 실패: 해시 도구(shasum·sha256sum)를 찾지 못함. 사용자에게 알릴 것."
+  fi
 fi
 
 if has '계획 승인'; then

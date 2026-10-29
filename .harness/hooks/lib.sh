@@ -1,6 +1,11 @@
 #!/bin/sh
 # 공용 훅 도우미. 각 훅에서 `. "$(dirname "$0")/lib.sh"`로 불러 사용
 
+# Windows Git sh를 비로그인으로 실행하면(Claude Code 훅) PATH에서 C:\Windows\System32의 find·sort가 /usr/bin보다 먼저 잡힘
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) PATH="/usr/bin:$PATH" ;;
+esac
+
 repo_root() {
   git rev-parse --show-toplevel 2>/dev/null || pwd
 }
@@ -74,13 +79,19 @@ strip_cmd() {
     }' | tr '\n' '\036' | sed -e 's/"[^"]*"//g' -e "s/'[^']*'//g" | tr '\036' '\n'
 }
 
+# 표준 입력의 SHA-256. Windows Git sh는 비로그인 셸이면 shasum(/usr/bin/core_perl)이 PATH에 없어 sha256sum으로 대체
+# 둘 다 없으면 빈 값
+sha256() {
+  if command -v shasum >/dev/null 2>&1; then shasum -a 256; else sha256sum; fi 2>/dev/null | cut -d' ' -f1
+}
+
 # 요구사항·PRD·API 문서 내용 해시. 상태 줄은 승인 후 갱신되므로 제외
 prd_hash() {
   root=$(repo_root)
   find "$root/docs/requirements.md" "$root/docs/prd" "$root/docs/api" -name '*.md' ! -name '_template.md' 2>/dev/null \
     | LC_ALL=C sort \
     | while read -r f; do printf '%s\n' "${f#"$root"/}"; grep -v '^- 상태:' "$f"; done \
-    | shasum -a 256 | cut -d' ' -f1
+    | sha256
 }
 
 # .harness/paths 목록에 속한 경로인지

@@ -3,6 +3,11 @@
 # 예외: `하네스 도입 승인`(30분, 승인 브랜치 한정)이 있으면 그 브랜치 push 1회 허용 후 승인 기록 삭제
 # 사람이 직접 보호 브랜치에 push해야 하면 `git push --no-verify` 사용
 
+# Windows에서 C:\Windows\System32의 find가 /usr/bin보다 먼저 잡히지 않게 함 (.harness/hooks/lib.sh와 같음)
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) PATH="/usr/bin:$PATH" ;;
+esac
+
 root=$(git rev-parse --show-toplevel)
 [ -f "$root/.harness/state/harness-off" ] && exit 0
 integration=$(sed -n 's/^- 통합 브랜치:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$root/docs/project.md" 2>/dev/null | head -n 1)
