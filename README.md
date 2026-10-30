@@ -380,7 +380,7 @@ feat/ITD-1234 주문 조회 API 추가
 ├── artifacts/work/F-##/       feature별 PLAN(Claude) · VERIFY · API-VERIFY · TEST-REPORT(Codex) · HANDOFF
 ├── .claude/                   Claude 설정·스킬·에이전트
 ├── .codex/                    Codex 설정·훅 등록·에이전트
-├── .agents/skills/            Codex 스킬 (공용 스킬은 원본 한 곳에 두고, 반대쪽에는 원본을 읽게 하는 위임 SKILL.md)
+├── .agents/skills/            Codex 스킬 (공용 스킬은 원본 한 곳에 두고 반대쪽에는 원본을 읽게 하는 위임 SKILL.md, Claude 전용인 implement·itd-commit은 Claude로 넘기라는 안내 SKILL.md)
 ├── .harness/
 │   ├── hooks/                 공용 훅 스크립트
 │   ├── paths · seed           하네스 소유 경로 · 프로젝트가 채우는 문서 목록
