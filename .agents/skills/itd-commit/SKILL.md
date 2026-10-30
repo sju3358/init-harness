@@ -9,7 +9,7 @@ description: ITD 티켓 커밋 컨벤션({종류}/ITD-#### 제목 + bullet 본�
 
 ## 1. 확인
 
-- 현재 브랜치가 `feat|fix|docs/ITD-####`인지 확인한다. 보호 브랜치면 멈춘다.
+- 현재 브랜치가 `feat|fix/ITD-####`(작업 worktree)인지 확인한다. 보호 브랜치(원본 폴더)면 멈춘다.
 - Codex feature 커밋이면 `TEST-REPORT.md`의 실행 결과가 있고 실패가 없는지 확인한다. 없거나 실패가 있으면 그 사실을 승인 요청에 그대로 적는다(숨기지 않음).
 - `git status`로 커밋 대상을 확인한다. 이번 feature와 무관한 변경, 비밀값(.env, 키 파일)이 있으면 제외하고 알린다.
 
@@ -22,7 +22,7 @@ description: ITD 티켓 커밋 컨벤션({종류}/ITD-#### 제목 + bullet 본�
 ```
 
 - 종류·티켓 번호는 브랜치명에서 가져온다. 티켓 제목은 사용자에게 묻고 그대로 쓴다(접두어 추가·삭제 금지).
-- `feat`·`docs`: staged diff 근거로 3~7개 bullet. 파일 나열이 아니라 무엇을 왜 했는지.
+- `feat`: staged diff 근거로 3~7개 bullet. 파일 나열이 아니라 무엇을 왜 했는지.
 - `fix`: `- 원인:`, `- 해결:` 두 줄.
 - `artifacts/` 산출물, 포맷터 자동 수정, lockfile은 본문에서 뺀다.
 - 커밋은 쌓아도 된다. 이미 push한 커밋은 amend하지 않는다.

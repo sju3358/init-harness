@@ -47,10 +47,10 @@ branch_key() {
   printf '%s' "$1" | tr '/' '_'
 }
 
-# docs/project.md의 "- 통합 브랜치: X" 값, 없으면 develop
+# docs/project.md의 "- 통합 브랜치: X" 값, 없으면 main
 integration_branch() {
   b=$(sed -n 's/^- 통합 브랜치:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$(repo_root)/docs/project.md" 2>/dev/null | head -n 1)
-  printf '%s' "${b:-develop}"
+  printf '%s' "${b:-main}"
 }
 
 is_protected_branch() {
@@ -61,7 +61,7 @@ is_protected_branch() {
 }
 
 is_work_branch() {
-  printf '%s' "$1" | grep -qE '^(feat|fix|docs)/ITD-[0-9]+$'
+  printf '%s' "$1" | grep -qE '^(feat|fix)/ITD-[0-9]+$'
 }
 
 # 커밋 메시지·heredoc 본문을 명령으로 오인하지 않도록 heredoc 본문과 따옴표 문자열을 지운 실행 구문

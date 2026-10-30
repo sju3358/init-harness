@@ -12,7 +12,7 @@ description: 하네스가 없는 진행 중 프로젝트에 하네스를 도입�
 - 프로젝트 루트에서 실행한다. `.harness/paths`가 이미 있으면 도입된 프로젝트이므로 멈추고 알린다.
 - `git status`가 깨끗해야 한다. 미커밋 변경이 있으면 멈추고 사용자가 정리하게 한다(하네스 파일과 섞이지 않게).
 - 현재 브랜치를 확인한다. 도입 대상 브랜치(보통 `main`)가 맞는지 사용자에게 확인하고, `git pull`로 최신화한다.
-- 진행 중인 작업 브랜치가 있으면 목록만 보고한다(도입 후 `feature-plan`으로 이어 붙일 대상).
+- 진행 중인 작업 브랜치가 있으면 목록만 보고한다(도입 후 worktree로 옮겨 `feature-plan`으로 이어 붙일 대상).
 
 ## 1. 하네스 파일 복사
 
@@ -51,7 +51,7 @@ rm -rf "$tmp"
 - `docs/project.md`를 코드(`build.gradle*`, `pom.xml`, `application*.yml`, 컨트롤러 매핑)에서 읽어 채운 뒤 사용자에게 확인받는다. 모르는 값은 비운다.
 - 멀티모듈이면 모듈 목록과 각 모듈의 소스 경로를 `디렉터리` 표에 적는다.
 - 컨트롤러 경로 앞에 붙는 context-path가 있으면 `API 경로 접두어`에 적는다.
-- 통합 브랜치(develop 등)와 보호 브랜치를 확인해 적는다.
+- 통합 브랜치(기본 `main`, 기존 프로젝트가 develop 등을 쓰면 그 값)와 보호 브랜치를 확인해 적는다. 원본 폴더는 이후 통합 브랜치로 두고 작업은 worktree에서 한다.
 
 ## 4. 문서화 범위 결정
 
@@ -62,7 +62,7 @@ rm -rf "$tmp"
 | 남은 범위만 (추천) | `requirements.md`에는 앞으로 할 작업만 REQ로. 기존 기능은 `범위 밖`에 "기존 구현"으로 |
 | 전체 역추출 | 기존 기능까지 REQ·PRD·API 문서로 작성 (검수용 전체 추적표가 필요할 때) |
 
-- 이 단계에서는 결정만 `docs/project.md`에 적고, 실제 요구사항·PRD 작성은 도입 후 일반 절차(`docs/ITD-####` 브랜치)로 한다.
+- 이 단계에서는 결정만 `docs/project.md`에 적고, 실제 요구사항·PRD 작성은 도입 후 일반 절차(`work-start`로 만든 티켓 worktree)로 한다.
 - `02-common.md`, `01-skillset.md`의 기존 규약 추출도 도입 후 작업으로 남긴다(도입 커밋을 하네스 골격으로 한정하기 위함).
 
 ## 5. 승인과 커밋·push
@@ -90,4 +90,4 @@ git push origin HEAD
 ## 6. 보고와 다음 단계
 
 - 커밋 해시, push 결과, 등록한 Git 훅, 보류 항목을 보고한다.
-- 이후는 일반 절차다: Claude에서 `req-gather`(남은 범위) → `prd-write` → `api-design` → `prd-verify`. 진행 중이던 작업 브랜치는 브랜치명이 `feat/ITD-####` 형식이어야 하며, Codex `feature-plan`으로 이미 구현한 부분과 남은 부분을 나눠 계획을 쓰고 `계획 승인`부터 이어 간다.
+- 이후는 일반 절차다: 티켓마다 `work-start`로 worktree를 만들고 그 세션에서 `req-gather`(남은 범위) → `prd-write` → `api-design` → `prd-verify` → `feature-plan`. 진행 중이던 작업 브랜치는 브랜치명이 `feat/ITD-####` 형식이어야 하며, 통합 브랜치를 병합해 하네스를 받은 뒤 `git worktree add ../<원본 폴더명>-ITD-#### feat/ITD-####`로 worktree를 만들고, Claude `feature-plan`으로 이미 구현한 부분과 남은 부분을 나눠 계획을 쓰고 `계획 승인`부터 이어 간다.

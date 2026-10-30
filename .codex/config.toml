@@ -1,4 +1,4 @@
 # 프로젝트 Codex 설정. 신뢰된 프로젝트에서만 적용됨
-# 메인·계획·검증 모두 GPT-6.1 Sol, medium 추론 수준을 사용
+# 메인·검증 모두 GPT-6.1 Sol, medium 추론 수준을 사용
 model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"

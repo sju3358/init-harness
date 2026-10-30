@@ -1,5 +1,5 @@
 #!/bin/sh
-# 작업 브랜치(feat|fix|docs/ITD-####)의 커밋 제목을 `{종류}/ITD-#### 제목` 형식으로 강제하고 브랜치 티켓과 대조
+# 작업 브랜치(feat|fix/ITD-####)의 커밋 제목을 `{종류}/ITD-#### 제목` 형식으로 강제하고 브랜치 티켓과 대조
 # 보호 브랜치의 사람 커밋(초기 셋팅 등)과 병합·되돌리기 커밋은 검사하지 않음
 
 [ -f "$(git rev-parse --show-toplevel)/.harness/state/harness-off" ] && exit 0
@@ -12,9 +12,9 @@ case "$title" in
   Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
 esac
 
-printf '%s' "$branch" | grep -qE '^(feat|fix|docs)/ITD-[0-9]+$' || exit 0
+printf '%s' "$branch" | grep -qE '^(feat|fix)/ITD-[0-9]+$' || exit 0
 
-if ! printf '%s' "$title" | grep -qE '^(feat|fix|docs)/ITD-[0-9]+ .+'; then
+if ! printf '%s' "$title" | grep -qE '^(feat|fix)/ITD-[0-9]+ .+'; then
   echo "commit-msg: 제목 형식 위반. '{종류}/ITD-#### 제목' (예: $branch 사용자 조회 API 추가)" >&2
   exit 1
 fi

@@ -7,7 +7,7 @@ description: 승인된 PRD·API 문서를 바꿔야 할 때 쓴다. Codex가 art
 
 ## 1. 요청 수집
 
-- `artifacts/work/*/HANDOFF.md`에서 처리가 `대기`인 PRD 변경 요청을 모두 모은다. 고객 요구 변경이면 출처(Notion·대화)를 받는다.
+- 요청이 나온 feature의 worktree 세션에서 실행한다. 그 worktree의 `artifacts/work/F-##/HANDOFF.md`에서 처리가 `대기`인 PRD 변경 요청을 모두 모은다. 고객 요구 변경이면 출처(Notion·대화)를 받는다.
 - 요청마다 근거 원문(요구사항, PRD, Codex가 인용한 코드)을 직접 읽고 사실 여부를 확인한다.
 
 ## 2. 사용자 결정
@@ -17,7 +17,7 @@ description: 승인된 PRD·API 문서를 바꿔야 할 때 쓴다. Codex가 art
 
 ## 3. 반영
 
-- `docs/ITD-####` 브랜치에서 작업한다(새 티켓이 있으면 받음).
+- 현재 작업 worktree(`feat|fix/ITD-####`)에서 작업한다. 진행 중인 티켓이 없는 고객 요구 변경이면 원본 폴더에서 `work-start`로 새 티켓 worktree를 만든 뒤 그 세션에서 한다.
 - PRD를 고치고 버전을 올린다(작은 보완 vX.Y+1, 범위 변경 vX+1.0). 변경 이력에 근거(요청 번호, REQ)를 적는다.
 - 영향받는 feature를 찾아 개요 feature 목록 비고에 "PRD vX.Y 변경 영향"을 적는다.
 - API가 바뀌면 `api-design`의 3단계(API 상태 `변경`·`폐기`, `CHANGELOG.md` 프론트 영향)를 따르고, 끝에 프론트 전달용 변경 요약을 사용자에게 준다.
@@ -27,4 +27,5 @@ description: 승인된 PRD·API 문서를 바꿔야 할 때 쓴다. Codex가 art
 
 - `prd-verify`를 실행한다. 프롬프트에 변경 범위(REQ, 문서#섹션)를 주되, 검증자는 그 REQ가 인용된 모든 문서를 다시 본다.
 - PRD 내용이 바뀌었으므로 기존 PRD 승인 기록은 해시 불일치로 무효가 된다. `PRD 승인`을 다시 받는다.
-- 사용자에게 Codex 쪽 후속 행동을 안내한다: 영향받는 feature는 `feature-plan`으로 계획을 다시 맞추고 `계획 승인`부터 다시 받는다.
+- 이 feature에 계획이 이미 있으면 `feature-plan`(재계획)으로 계획을 다시 맞추고 `계획 승인`부터 다시 받은 뒤 Codex가 재개한다.
+- 다른 worktree에서 진행 중인 feature가 영향받으면 그 worktree(`git worktree list`)를 알려준다. 그쪽은 이 변경이 통합 브랜치에 병합된 뒤 반영한다.

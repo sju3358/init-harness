@@ -8,13 +8,13 @@ description: docs/requirements.md를 바탕으로 PRD(docs/prd/ - 개요·featur
 ## 0. 준비
 
 - `docs/requirements.md`, `docs/project.md`, 기존 `docs/prd/**`를 읽는다.
-- 작업 브랜치가 `docs/ITD-####`인지 확인한다.
+- 작업 브랜치가 `feat|fix/ITD-####`(작업 worktree)인지 확인한다.
 - 이미 `승인` 상태인 PRD를 고치려는 요청이면 이 스킬이 아니라 `prd-change`를 쓴다.
 
 ## 1. 구조 결정
 
-- feature를 나눈다. 한 feature는 ITD 티켓·브랜치 하나로 4~5일 프로젝트 안에서 구현할 크기다. 여러 기능이 섞여도 하나의 브랜치로 묶는 게 자연스러우면 한 feature로 둔다.
-- feature 목록과 의존 관계를 먼저 사용자에게 보여주고 확인받는다. 확인 전에 기능 명세를 쓰지 않는다.
+- 이 티켓의 feature 하나를 정한다. 한 feature는 ITD 티켓·브랜치·worktree 하나로 4~5일 프로젝트 안에서 구현할 크기다. 범위가 크면 나눌 feature와 티켓을 사용자에게 제안하고, 이 worktree에서는 하나만 쓴다.
+- feature ID·이름·의존 관계를 먼저 사용자에게 보여주고 확인받는다. 확인 전에 기능 명세를 쓰지 않는다. 개요 feature 목록에 행을 추가하고 ITD 티켓 칸에 이 브랜치의 티켓 번호를 적는다.
 
 ## 2. 작성
 

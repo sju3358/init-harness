@@ -8,8 +8,9 @@ description: Notion 기획 문서(MCP)와 사용자와의 대화에서 요구사
 ## 0. 준비
 
 - `docs/project.md`를 읽는다. 비어 있으면 `project-init`부터 하라고 안내한다.
-- 작업 브랜치가 `docs/ITD-####`가 아니면 티켓 번호를 묻고 통합 브랜치에서 `git switch -c docs/ITD-####`로 만든다.
-- 기존 `docs/requirements.md`가 있으면 이어 쓰기다. 기존 ID를 바꾸거나 재사용하지 않는다.
+- 현재 브랜치가 `feat|fix/ITD-####`(작업 worktree)가 아니면 멈추고 원본 폴더에서 `work-start`를 하도록 안내한다.
+- 기존 `docs/requirements.md`가 있으면 이어 쓰기다. 기존 ID를 바꾸거나 재사용하지 않고, 새 ID는 `workflow.md` ID 체계 규칙대로 다른 worktree와 겹치지 않게 정한다.
+- 이 티켓의 feature 범위만 요구사항에 적는다. 원문에서 다른 feature의 요구가 나오면 기록하지 않고 별도 티켓 후보로 보고한다(`check-trace.sh prd`는 모든 REQ가 PRD에 반영됐는지 봄).
 
 ## 1. 원문 수집
 

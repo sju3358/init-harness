@@ -11,7 +11,7 @@ esac
 root=$(git rev-parse --show-toplevel)
 [ -f "$root/.harness/state/harness-off" ] && exit 0
 integration=$(sed -n 's/^- 통합 브랜치:[[:space:]]*\([^[:space:]]*\).*/\1/p' "$root/docs/project.md" 2>/dev/null | head -n 1)
-integration=${integration:-develop}
+integration=${integration:-main}
 adopt="$root/.harness/state/adopt-approved"
 
 adopt_ok() {

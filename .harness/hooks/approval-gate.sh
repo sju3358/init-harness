@@ -44,7 +44,7 @@ check_adopt_commit() {
 
 if git_sub commit; then
   if is_protected_branch "$branch"; then
-    adopt_approved "$branch" || deny "보호 브랜치($branch)에 커밋 금지. 작업 브랜치(feat|fix|docs/ITD-####)에서 커밋. 하네스 도입·업데이트 중이면 사용자에게 '하네스 도입 승인' 또는 '하네스 업데이트 승인' 입력을 요청 (docs/rules/git.md)"
+    adopt_approved "$branch" || deny "보호 브랜치($branch)에 커밋 금지. 작업 worktree(feat|fix/ITD-####)에서 커밋. 하네스 도입·업데이트 중이면 사용자에게 '하네스 도입 승인' 또는 '하네스 업데이트 승인' 입력을 요청 (docs/rules/git.md)"
     check_adopt_commit
   else
     approved commit || deny "커밋 승인 기록 없음(또는 30분 경과). 커밋 메시지 미리보기를 보여주고 사용자에게 '커밋 승인' 입력을 요청할 것"

@@ -1,10 +1,11 @@
 # init-harness
 
-SI 프로젝트(보통 4~5일 단위)를 위한 **Claude·Codex 분업 하네스**입니다. Claude가 기획과 문서를, Codex가 구현과 테스트를 맡고, 모든 결과물은 요구사항 ID로 이어져 검증됩니다.
+SI 프로젝트(보통 4~5일 단위)를 위한 **Claude·Codex 분업 하네스**입니다. Claude가 기획·문서·개발계획을, Codex가 구현과 테스트·검증을 맡고, 모든 결과물은 요구사항 ID로 이어져 검증됩니다.
 
 **핵심 원칙**
 
-- **역할 분리**: Claude는 문서만, Codex는 코드만 고칩니다. 훅이 서로의 영역 편집을 막습니다.
+- **역할 분리**: Claude는 문서와 계획만, Codex는 코드만 고칩니다. 훅이 서로의 영역 편집을 막습니다.
+- **티켓 하나 = worktree 하나**: 원본 폴더는 항상 `main`으로 두고, 티켓(=feature)마다 브랜치와 worktree를 따로 만들어 문서부터 구현까지 그 안에서 끝냅니다. 여러 티켓을 병렬로 진행할 수 있습니다.
 - **문서가 원본**: 요구사항, PRD, API 문서가 기준입니다. 코드는 문서를 따르고, 문서를 바꿔야 하면 정해진 경로로 되돌아갑니다.
 - **사람이 승인**: 다음 단계로 넘어가는 네 지점(PRD, 계획, 커밋, 푸시)은 사용자가 승인 문구를 직접 입력해야 열립니다.
 - **작성자 ≠ 검증자**: 검증은 항상 새 컨텍스트의 별도 에이전트가 원문만 보고 판정합니다.
@@ -40,7 +41,7 @@ SI 프로젝트(보통 4~5일 단위)를 위한 **Claude·Codex 분업 하네스
 | AI 도구 | Claude Code (Pro 이상), Codex (Plus 이상) |
 | 대상 스택 | Java + Spring Boot 기본. DB·메시지 큐 등은 프로젝트마다 `project-init`에서 결정 |
 
-Claude와 Codex는 **같은 PC의 같은 프로젝트 폴더**에서 씁니다. 승인 기록(`.harness/state/`)이 git에 올라가지 않는 로컬 파일이기 때문입니다.
+Claude와 Codex는 **같은 PC의 같은 worktree 폴더**에서 씁니다. 승인 기록(`.harness/state/`)이 git에 올라가지 않는 로컬 파일이고 worktree마다 따로 남기 때문입니다.
 
 ## 2. 시작하기
 
@@ -60,7 +61,9 @@ Claude 세션을 열고 **"프로젝트 초기 셋팅해줘"** 라고 하면 `pr
 1. 스택을 질문합니다. Java·Spring Boot 버전, 빌드 도구, DB, ORM, 메시지 큐, 인증, 배포 대상, 테스트 방식을 매번 묻습니다.
 2. 답을 `docs/project.md`에 기록하고, 검증 명령(빌드·테스트)이 맞는지 확인받습니다.
 3. Git 훅을 등록합니다(`core.hooksPath`).
-4. 초기 커밋과 `develop` 브랜치 생성 명령을 안내합니다. 이 작업은 사용자가 직접 실행합니다.
+4. 초기 커밋과 `main` push 명령을 안내합니다. 이 작업은 사용자가 직접 실행합니다.
+
+이 폴더(원본 폴더)는 이후에도 `main`으로 둡니다. 티켓 작업은 이 폴더의 Claude 세션에서 **"ITD-1234 작업 시작해줘"** 라고 해서 worktree를 만든 뒤, 그 worktree 폴더에서 새 세션을 열어 진행합니다([3장](#3-전체-흐름)).
 
 ### 2-2. 진행 중인 프로젝트에 도입
 
@@ -79,76 +82,84 @@ init-harness를 임시 폴더에 clone해서, 그 안의 .claude/skills/harness-
 
 ```mermaid
 flowchart TD
-    subgraph C["Claude · 기획/문서 (docs/ITD-#### 브랜치)"]
-        C1[req-gather<br/>요구사항 도출] --> C2[prd-write<br/>PRD 작성]
-        C2 --> C3[api-design<br/>API 문서]
-        C3 --> C4[prd-verify<br/>정합성 검증]
-        C4 --> G1{{"✋ PRD 승인"}}
+    W[원본 폴더 main<br/>Claude: work-start] --> WT
+
+    subgraph WT["worktree ../원본폴더명-ITD-#### (feat/ITD-####, 티켓=feature 하나)"]
+        subgraph C["Claude · 기획/문서/계획"]
+            C1[req-gather<br/>요구사항 도출] --> C2[prd-write<br/>PRD 작성]
+            C2 --> C3[api-design<br/>API 문서]
+            C3 --> C4[prd-verify<br/>정합성 검증]
+            C4 --> G1{{"✋ PRD 승인"}}
+            G1 --> C5[feature-plan<br/>개발계획]
+            C5 --> G2{{"✋ 계획 승인"}}
+        end
+
+        subgraph X["Codex · 구현/검증"]
+            X1[implement<br/>구현] --> X2[doc-code-verify<br/>문서-코드 검증]
+            X2 --> X3[api-verify<br/>API 검증]
+            X3 --> X4[test-write<br/>테스트 작성]
+            X4 --> X5[test-verify<br/>테스트 검증]
+            X5 --> G3{{"✋ 커밋·푸시 승인"}}
+        end
+
+        G2 --> X1
     end
 
-    G1 --> M1[사용자: PR·병합]
-    M1 --> X1
+    G3 --> M[사용자: PR·병합 → worktree 정리]
 
-    subgraph X["Codex · 구현/검증 (feat/ITD-#### 브랜치, feature마다 반복)"]
-        X1[feature-start] --> X2[feature-plan<br/>개발계획]
-        X2 --> G2{{"✋ 계획 승인"}}
-        G2 --> X3[implement<br/>구현]
-        X3 --> X4[doc-code-verify<br/>문서-코드 검증]
-        X4 --> X5[api-verify<br/>API 검증]
-        X5 --> X6[test-write<br/>테스트 작성]
-        X6 --> X7[test-verify<br/>테스트 검증]
-        X7 --> G3{{"✋ 커밋·푸시 승인"}}
-    end
-
-    G3 --> M2[사용자: PR·병합]
-
-    X3 -. PRD 문제 발견 .-> R[HANDOFF.md<br/>PRD 변경 요청]
-    X4 -. PRD 문제 발견 .-> R
-    X5 -. PRD 문제 발견 .-> R
+    X1 -. 계획 이탈 .-> P[HANDOFF.md<br/>계획 변경 요청] -.-> C5
+    X1 -. PRD 문제 발견 .-> R[HANDOFF.md<br/>PRD 변경 요청]
+    X2 -. PRD 문제 발견 .-> R
+    X3 -. PRD 문제 발견 .-> R
     R -.-> CH[Claude: prd-change] -.-> C4
 
-    X4 -. 수정 필요 .-> X3
-    X5 -. 수정 필요 .-> X3
-    X7 -. 수정 필요 .-> X3
+    X2 -. 수정 필요 .-> X1
+    X3 -. 수정 필요 .-> X1
+    X5 -. 수정 필요 .-> X1
 ```
 
-- PR 생성과 병합은 **사람이 직접** 합니다. 에이전트는 작업 브랜치까지만 push합니다.
-- Claude와 Codex는 대화가 아니라 **파일로 인계**합니다. 다음 담당자는 `artifacts/work/F-##/HANDOFF.md`부터 읽습니다.
+- **원본 폴더는 항상 `main`** 입니다. 여기서는 `work-start`(worktree 생성), 초기 셋팅, 하네스 도입·업데이트만 하고 문서·계획·코드 편집은 훅이 막습니다.
+- **티켓마다 worktree 하나**를 원본 폴더의 형제 폴더(`../<원본 폴더명>-ITD-####`)에 만듭니다. Claude·Codex 세션은 이 폴더에서 엽니다. Codex는 세션 폴더 밖에 쓸 수 없고, 승인 기록도 worktree마다 따로 남기 때문입니다.
+- 동시에 편집하는 세션마다 자기 worktree를 씁니다. Claude가 티켓 B의 문서를 쓰는 동안 Codex가 티켓 A를 구현하거나, Claude 세션 둘이 두 티켓을 동시에 진행할 수 있습니다. 한 worktree에서는 Claude → Codex 순서로 이어 받습니다.
+- PR 생성과 병합은 **사람이 직접** 합니다. 에이전트는 작업 브랜치까지만 push합니다. 병합 후 원본 폴더에서 `git worktree remove`, `git branch -d`로 정리합니다.
+- Claude와 Codex는 대화가 아니라 **파일로 인계**합니다. 다음 담당자는 같은 worktree의 `artifacts/work/F-##/HANDOFF.md`부터 읽습니다.
 - 절차의 단일 원본은 [docs/rules/workflow.md](docs/rules/workflow.md)입니다. 이 README는 요약입니다.
 
 ## 4. 단계별 절차
 
-### 4-1. Claude: 기획·문서
+### 4-1. Claude: 작업 시작·기획·문서·계획
 
 | 단계 | 이렇게 말하면 | 하는 일 | 산출물 | 다음으로 넘어가는 조건 |
 | --- | --- | --- | --- | --- |
-| 요구사항 | "요구사항 정리해줘", "Notion 기획서 읽어줘" | Notion(MCP)과 대화에서 요구사항을 뽑아 `REQ-###`, 인수 기준, 출처를 적습니다. 불확실한 건 미결 질문(`Q-###`)으로 분리합니다 | `docs/requirements.md` | 요구사항마다 판정 가능한 인수 기준이 있음 |
-| PRD | "PRD 작성해줘" | feature 목록(`F-##`)을 먼저 확인받고 개요, 스킬셋, 공통 사항, 기능별 명세, 배포·운영을 씁니다. 모든 규정에 근거 REQ를 답니다 | `docs/prd/**` | `check-trace.sh prd` 통과 |
+| 작업 시작 | (원본 폴더에서) "ITD-1234 작업 시작해줘" | 티켓 번호·종류를 확인하고 `main`을 최신화한 뒤 브랜치와 worktree를 만듭니다 | `feat/ITD-1234`, `../<원본 폴더명>-ITD-1234` | 그 폴더에서 새 Claude 세션을 엶 |
+| 요구사항 | "요구사항 정리해줘", "Notion 기획서 읽어줘" | Notion(MCP)과 대화에서 **이 티켓 범위의** 요구사항을 뽑아 `REQ-###`, 인수 기준, 출처를 적습니다. 불확실한 건 미결 질문(`Q-###`)으로, 다른 feature 요구는 별도 티켓 후보로 분리합니다 | `docs/requirements.md` | 요구사항마다 판정 가능한 인수 기준이 있음 |
+| PRD | "PRD 작성해줘" | 이 티켓의 feature(`F-##`)를 먼저 확인받고 개요, 스킬셋, 공통 사항, 기능 명세, 배포·운영을 씁니다. 모든 규정에 근거 REQ를 답니다 | `docs/prd/**` | `check-trace.sh prd` 통과 |
 | API 문서 | "API 문서 작성해줘" | 프론트 전달용 Markdown 문서를 씁니다. 엔드포인트(`API-###`)마다 필드, 타입, 필수, null 가능, 에러를 적고 변경 이력을 남깁니다. 마지막에 전달용 요약을 줍니다 | `docs/api/**` | PRD의 모든 API가 필드 단위까지 문서화됨 |
 | 검증 | "PRD 검증해줘" | `prd-verifier`(새 컨텍스트)가 요구사항, PRD, API를 대조해 판정하고, 메인 세션이 그 결과를 다시 확인합니다 | `docs/verification/prd-verify.md` | 결론 `승인 가능`, 사람 승인 필요 항목 답변 완료 |
-| ✋ 승인 | `PRD 승인` 입력 | 요구사항·PRD·API 문서의 내용 해시를 기록합니다 | 문서 상태 `승인 vX.Y` | 이후 Codex가 시작 가능 |
+| ✋ 승인 | `PRD 승인` 입력 | 요구사항·PRD·API 문서의 내용 해시를 이 worktree에 기록합니다 | 문서 상태 `승인 vX.Y` | 계획 작성 가능 |
+| 계획 | "개발계획 작성해줘" | REQ·API → 변경 파일 → 테스트 케이스(`TC-F01-##`)를 매핑합니다. 사람이 정할 항목은 근거와 함께 질문합니다 | `artifacts/work/F-01/PLAN.md` | 확인 필요 항목 답변 완료 |
+| ✋ 승인 | `계획 승인` 입력 | 이 브랜치의 소스 편집을 허용합니다 | | 같은 worktree에서 Codex 세션을 엶 |
 
-### 4-2. Codex: 구현·검증 (feature 단위)
+### 4-2. Codex: 구현·검증 (같은 worktree)
 
 | 단계 | 이렇게 말하면 | 하는 일 | 산출물 | 다음으로 넘어가는 조건 |
 | --- | --- | --- | --- | --- |
-| 시작 | "F-01 시작해" | PRD 승인이 유효한지 확인하고, ITD 티켓 번호를 받아 브랜치와 작업 폴더를 만듭니다 | `feat/ITD-####`, `artifacts/work/F-01/` | PRD 승인 유효 |
-| 계획 | "개발계획 작성해" | `planner`가 REQ·API → 변경 파일 → 테스트 케이스(`TC-F01-##`)를 매핑합니다. 사람이 정할 항목은 근거와 함께 질문합니다 | `PLAN.md` | 확인 필요 항목 답변 완료 |
-| ✋ 승인 | `계획 승인` 입력 | 이 브랜치의 소스 편집을 허용합니다 | | |
-| 구현 | "구현 시작해" | 계획과 API 문서대로 구현합니다. 계획에서 벗어나야 하면 멈추고 재승인을 받고, PRD 문제는 변경 요청으로 올립니다 | 소스 코드 | 빌드 통과 |
+| 구현 | "HANDOFF 읽고 구현 시작해" | 계획과 API 문서대로 구현합니다. `PLAN.md`는 고칠 수 없으므로, 계획에서 벗어나야 하면 `HANDOFF.md` "계획 변경 요청"에 적고 멈춥니다(Claude가 재계획). PRD 문제는 "PRD 변경 요청"으로 올립니다 | 소스 코드 | 빌드 통과 |
 | 문서-코드 검증 | "정합성 검증해" | `verifier`가 REQ마다 `파일:줄` 근거로 PRD와 코드를 대조합니다 | `VERIFY.md` | 수정 필요 0건 |
 | API 검증 | "API 검증해" | `check-api.mjs`로 엔드포인트 목록을 기계 비교하고, `verifier`가 파라미터·필드·에러 코드를 항목별로 대조합니다 | `API-VERIFY.md` | 불일치 0건 |
 | 테스트 작성 | "테스트 작성해" | TC마다 테스트를 쓰고 `@DisplayName("[TC-F01-03][REQ-012] ...")`처럼 ID를 붙입니다 | 테스트 코드 | `check-trace.sh feature F-01` 통과 |
 | 테스트 검증 | "테스트 검증해" | 테스트를 실행하고, `verifier`가 각 테스트가 인수 조건을 실제로 검사하는지 판정합니다 | `TEST-REPORT.md`, `docs/traceability.md` | 실패 0건, 무효·약함 판정 0건 |
 | ✋ 승인 | "커밋해줘" 후 `커밋 승인`, `푸시 승인` 입력 | `itd-commit`이 ITD 형식 메시지를 보여 주고, 승인 후 커밋하고 작업 브랜치에 push합니다 | 커밋 | |
 
-Codex는 한 세션에서 feature 하나의 단계 하나만 진행합니다. 단계가 끝나면 새 세션을 열고 "HANDOFF 읽고 이어서 진행해"라고 합니다. 한 세션에서 계속 진행하면 컨텍스트가 커져 호출마다 사용량이 크게 늘어납니다.
+계획 이탈의 예: 계획에 없는 파일(공통 예외 처리기 수정 등)·라이브러리·DB 스키마 변경, 기존 테스트 수정, 재사용하려던 클래스가 맞지 않음. 같은 파일 안 private 메서드 추가나 이름 조정 같은 사소한 이탈은 "계획 변경 요청"에 `기록만`으로 적고 진행합니다.
+
+Codex는 한 세션에서 구현부터 테스트 검증까지 이어서 진행합니다. 단계마다 `HANDOFF.md`를 갱신하고, 계획·PRD 변경 요청, 사람 승인 필요 항목, 커밋·푸시 승인에서만 멈춥니다. 세션이 끊기면 같은 worktree에서 새 세션을 열고 "HANDOFF 읽고 이어서 진행해"라고 합니다.
 
 ## 5. 승인 게이트
 
 | 입력 문구 | 열리는 것 | 유효 범위 | 막는 장치 |
 | --- | --- | --- | --- |
-| `PRD 승인` | Codex 작업 시작 | 요구사항·PRD·API 문서 내용이 바뀌기 전까지 | `prd-check.sh` (해시 비교) |
+| `PRD 승인` | 개발계획 작성 | 해당 worktree, 요구사항·PRD·API 문서 내용이 바뀌기 전까지 | `prd-check.sh` (해시 비교) |
 | `계획 승인` | `src/`·빌드 파일 편집 | 해당 작업 브랜치 | `edit-guard.sh` |
 | `커밋 승인` | `git commit` | 30분 | `approval-gate.sh` |
 | `푸시 승인` | `git push` | 30분 | `approval-gate.sh` |
@@ -163,7 +174,8 @@ Codex는 한 세션에서 feature 하나의 단계 하나만 진행합니다. �
 - "진행해", "ㄱㄱ" 같은 일반 응답은 승인이 아닙니다. 에이전트가 정확한 문구를 다시 안내합니다.
 - 승인 기록은 **사용자 프롬프트에서만** 만들어집니다. 에이전트가 승인 기록 파일을 직접 만들거나 지우는 명령은 차단됩니다.
 - PRD 승인 해시는 `- 상태:` 줄을 빼고 계산합니다. 그래서 승인 후 상태 줄을 `승인 vX.Y`로 바꿔도 승인은 유지되고, 나머지 내용이 한 글자라도 바뀌면 무효가 됩니다.
-- 계획 승인 후 범위, 파일, 라이브러리가 바뀌면 `승인 취소` 후 다시 `계획 승인`을 받습니다.
+- 승인 기록은 세션을 연 worktree에 남습니다. 승인 문구는 해당 티켓 worktree의 세션에서 입력합니다.
+- 계획 승인 후 범위, 파일, 라이브러리가 바뀌면 Claude가 `PLAN.md`를 고치고, `승인 취소` 후 다시 `계획 승인`을 받습니다.
 - `하네스 OFF`는 하네스 원본 저장소를 개발할 때처럼 훅이 방해될 때 씁니다. 기록이 `.harness/state/`에 남아 git에 올라가지 않으므로 다른 PC·프로젝트로 전파되지 않습니다. `CLAUDE.md`·`AGENTS.md`의 지침은 OFF 중에도 그대로 로드됩니다.
 
 ## 6. 추적과 검증
@@ -204,15 +216,15 @@ ID는 바꾸거나 재사용하지 않습니다. 삭제된 요구사항은 행�
 - 메인 세션은 검증 결과를 그대로 넘기지 않습니다. 위험이 큰 항목을 직접 재현해 확인하고, 하나라도 다르면 나머지 "통과" 항목도 다시 봅니다.
 - "확인 못한 부분"은 "통과"와 같은 비중으로 보고합니다. 실행하지 않은 테스트는 통과로 쓰지 않습니다.
 
-## 7. 되돌림: PRD 변경 요청
+## 7. 되돌림: PRD·계획 변경 요청
 
-Codex는 PRD와 API 문서를 고칠 수 없습니다. 구현이나 검증 중에 문서 문제를 발견하면 아래 순서로 처리합니다.
+Codex는 PRD, API 문서, `PLAN.md`를 고칠 수 없습니다. 구현이나 검증 중에 문제를 발견하면 같은 worktree 안에서 아래 순서로 처리합니다.
 
-1. **Codex**: `HANDOFF.md`의 "PRD 변경 요청"에 대상(REQ, API, 문서 위치), 문제, 근거, 제안을 적고 멈춥니다.
-2. **사용자**: Claude에서 "PRD 변경 요청 반영해"라고 합니다.
-3. **Claude** (`prd-change`): 요청마다 근거를 보여주고 사용자가 반영 / 반려 / 고객 확인 중 하나를 정합니다. 반영하면 버전을 올리고, API가 바뀌었으면 `CHANGELOG.md`에 프론트 영향을 적습니다.
-4. **Claude**: 재검증합니다. 문서가 바뀌었으므로 `PRD 승인`을 다시 받습니다.
-5. **Codex**: 영향받는 feature의 계획을 다시 맞추고 `계획 승인`부터 재개합니다.
+1. **Codex**: `HANDOFF.md`의 "PRD 변경 요청"(문서 문제) 또는 "계획 변경 요청"(계획 이탈)에 대상, 문제, 근거, 제안을 적고 멈춥니다.
+2. **사용자**: 같은 worktree의 Claude 세션에서 "PRD 변경 요청 반영해" 또는 "계획 변경 요청 반영해"라고 합니다.
+3. **Claude** (`prd-change`): 요청마다 근거를 보여주고 사용자가 반영 / 반려 / 고객 확인 중 하나를 정합니다. 반영하면 버전을 올리고, API가 바뀌었으면 `CHANGELOG.md`에 프론트 영향을 적은 뒤 재검증하고 `PRD 승인`을 다시 받습니다. 계획 변경 요청만 있으면 이 단계는 건너뜁니다.
+4. **Claude** (`feature-plan`): `PLAN.md`를 고치고 "계획 변경 이력"에 남깁니다. 사용자는 `승인 취소` 후 `계획 승인`을 다시 입력합니다.
+5. **Codex**: `HANDOFF.md`를 다시 읽고 구현을 재개합니다(같은 세션이어도 됨).
 
 API 문서와 코드가 다를 때는 **코드를 문서에 맞추는 것이 기본**입니다. 문서를 바꿔야 할 때만 위 경로를 탑니다.
 
@@ -222,16 +234,15 @@ API 문서와 코드가 다를 때는 **코드를 문서에 맞추는 것이 기
 
 | 작업 | Claude가 대행 (Codex 영역) | Codex가 대행 (Claude 영역) |
 | --- | --- | --- |
-| 커밋·push | 구현 커밋 | 문서 커밋 |
+| 커밋·push | 구현 커밋 | 문서·계획 커밋 |
 | 기계 검사 | `check-trace.sh feature`, `check-api.mjs` | `check-trace.sh prd` |
 | 빌드·테스트 실행 | 실행하고 `TEST-REPORT.md`에 기록 | - |
 | 검증 판정 | 문서-코드, API, 테스트 유효성 (`code-verifier`) | PRD 정합성 (`verifier` mode=prd) |
-| feature 시작 준비 | 브랜치 생성, 템플릿 복사 | - |
 | 인계 정리 | `HANDOFF.md` 상태·대행 기록 | 같음 |
-| 통합 브랜치 반영 | 충돌 없을 때만 병합 | 같음 |
+| 통합 브랜치 반영 | 충돌 없을 때만 worktree에 병합 | 같음 |
 | 프론트 전달 요약 | - | `CHANGELOG.md` 기반 요약 |
 
-**대행 중에도 금지**: 상대 영역 편집(훅이 차단), 병합 충돌 해결, 승인 답변란 채우기, 상대가 하던 구현이나 문서 작성을 이어서 하기. 대행 검증에서 "수정 필요"가 나오면 대행한 쪽은 고치지 않고 `HANDOFF.md` "대행 기록"에 남깁니다.
+**대행 중에도 금지**: 상대 영역 편집(훅이 차단), Codex의 worktree 생성·개발계획 작성, 병합 충돌 해결, 승인 답변란 채우기, 상대가 하던 구현이나 문서 작성을 이어서 하기. 대행 검증에서 "수정 필요"가 나오면 대행한 쪽은 고치지 않고 `HANDOFF.md` "대행 기록"에 남깁니다.
 
 ## 9. 예외: 하네스 도입·업데이트
 
@@ -264,16 +275,24 @@ API 문서와 코드가 다를 때는 **코드를 문서에 맞추는 것이 기
 
 ## 10. Git 규칙
 
-### 브랜치
+### 브랜치와 worktree
 
-| 브랜치 | 용도 | 담당 |
+| 브랜치 | 폴더 | 용도 |
 | --- | --- | --- |
-| `main`, `master`, 통합 브랜치(기본 `develop`) | 보호 브랜치. 직접 편집·커밋·push 금지 | 사람이 PR로 병합 |
-| `feat/ITD-####` | feature 구현 (feature 1개 = 티켓 1개 = 브랜치 1개) | Codex |
-| `fix/ITD-####` | 결함 수정 | Codex |
-| `docs/ITD-####` | 요구사항·PRD·API 문서 작성·변경 | Claude |
+| `main`(통합 브랜치), `master` | 원본 폴더 | 보호 브랜치. 직접 편집·커밋·push 금지. 사람이 PR로 병합 |
+| `feat/ITD-####` | `../<원본 폴더명>-ITD-####` | feature 하나의 문서·계획(Claude)과 구현·테스트(Codex). feature 1개 = 티켓 1개 = 브랜치 1개 = worktree 1개 |
+| `fix/ITD-####` | `../<원본 폴더명>-ITD-####` | 결함 수정 |
 
-티켓 번호를 모르면 에이전트가 브랜치명을 짓지 않고 사용자에게 묻습니다.
+```
+my-project/              main            ← 원본 폴더 (work-start, 초기 셋팅만)
+my-project-ITD-1234/     feat/ITD-1234   ← Codex 세션 (구현 중)
+my-project-ITD-1235/     feat/ITD-1235   ← Claude 세션 A (PRD 작성 중)
+my-project-ITD-1240/     fix/ITD-1240    ← Claude 세션 B (계획 작성 중)
+```
+
+- 티켓 번호를 모르면 에이전트가 브랜치명을 짓지 않고 사용자에게 묻습니다.
+- 병렬 티켓끼리 ID가 겹치지 않도록, 새 `REQ`·`F`·`API` ID는 `origin/main`과 다른 worktree에서 쓰인 최댓값 다음 번호로 정합니다.
+- 병합 후 정리(원본 폴더에서 사용자가 실행): `git pull`, `git worktree remove ../my-project-ITD-1234`, `git branch -d feat/ITD-1234`.
 
 ### 커밋 메시지
 
@@ -294,7 +313,7 @@ feat/ITD-1234 주문 조회 API 추가
 
 | 훅 | 시점 | 막는 것 |
 | --- | --- | --- |
-| `edit-guard.sh` | 파일 편집 전 | Claude의 소스·빌드·`PLAN.md` 편집 / Codex의 요구사항·PRD·API 문서 편집 / 계획 승인 없는 소스 편집 / 작업 브랜치가 아닌 곳에서의 소스 편집 / 승인 기록 파일 편집 |
+| `edit-guard.sh` | 파일 편집 전 | Claude의 소스·빌드 편집 / Codex의 요구사항·PRD·API 문서·`PLAN.md` 편집 / 계획 승인 없는 소스 편집 / 작업 브랜치가 아닌 곳(원본 폴더)에서의 문서·산출물·소스 편집 / 승인 기록 파일 편집 |
 | `approval-gate.sh` | 셸 명령 전 | 승인 없는 commit·push / 보호 브랜치 커밋 / 승인 기록 조작 / 하네스 예외 범위를 벗어난 커밋·push |
 | `git-safety-guard.sh` | 셸 명령 전 | `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`, 강제 push, bare `stash`·`stash pop`, `pkill`·`killall`·`taskkill /IM`·`Stop-Process -Name` |
 | `record-approval.sh` | 사용자 입력 시 | (막지 않음) 승인 문구 기록 |
@@ -309,14 +328,11 @@ feat/ITD-1234 주문 조회 API 추가
 
 | 위치 | 모델 | 용도 | 설정 파일 |
 | --- | --- | --- | --- |
-| Claude 메인 | Opus 5.5 | 요구사항 도출, PRD·API 문서 작성 | `.claude/settings.json` |
+| Claude 메인 | Opus 5.5 | 요구사항 도출, PRD·API 문서 작성, 개발계획 | `.claude/settings.json` |
 | Claude `prd-verifier` | Opus 5.5 | PRD 정합성 검증 | `.claude/agents/prd-verifier.md` |
 | Claude `code-verifier` | Opus 5.5 | 구현 검증 대행 | `.claude/agents/code-verifier.md` |
-| Codex 메인 | gpt-6-luna, medium | 구현, 테스트 작성 | `.codex/config.toml` |
-| Codex `planner` | gpt-6.1-sol, high | 개발계획 | `.codex/agents/planner.toml` |
-| Codex `verifier` | gpt-6.1-sol, high | 문서-코드·API·테스트 검증, PRD 검증 대행 | `.codex/agents/verifier.toml` |
-
-Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 씁니다. 양이 많은 구현은 가벼운 모델이 맡습니다.
+| Codex 메인 | gpt-6.1-sol, medium | 구현, 테스트 작성 | `.codex/config.toml` |
+| Codex `verifier` | gpt-6.1-sol, medium | 문서-코드·API·테스트 검증, PRD 검증 대행 | `.codex/agents/verifier.toml` |
 
 ## 13. 디렉터리 구조
 
@@ -337,7 +353,7 @@ Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 
 │   ├── traceability.md        요구사항 추적표 (검수 산출물)
 │   ├── verification/          PRD 검증 결과
 │   └── rules/                 workflow(절차 원본) · common · principles(개발 원칙) · git
-├── artifacts/work/F-##/       feature별 PLAN · VERIFY · API-VERIFY · TEST-REPORT · HANDOFF
+├── artifacts/work/F-##/       feature별 PLAN(Claude) · VERIFY · API-VERIFY · TEST-REPORT(Codex) · HANDOFF
 ├── .claude/                   Claude 설정·스킬·에이전트
 ├── .codex/                    Codex 설정·훅 등록·에이전트
 ├── .agents/skills/            Codex 스킬 (공용 스킬은 원본 한 곳에 두고, 반대쪽에는 원본을 읽게 하는 위임 SKILL.md)
@@ -358,23 +374,27 @@ Pro·Plus 사용량 한도를 고려해 상위 모델은 계획과 검증에만 
 | 셸 쓰기 우회 | 편집 차단은 에디터 도구(Edit·Write·apply_patch) 기준이라, `sed -i`나 `cat >`로 쓰면 막지 못합니다 | 규칙으로 금지하고, 검증 단계에서 `git diff`로 계획과 대조 |
 | 같은 PC 전제 | 승인 기록은 로컬 파일입니다 | 다른 PC에서는 승인을 다시 입력 |
 | 훅 로드 시점 | Claude는 세션 시작 때 훅 등록을 읽습니다. 훅 스크립트 내용 변경은 바로 반영되지만, 등록(`settings.json`) 변경은 재시작해야 반영됩니다 | 하네스 도입 직후나 설정 변경 후에는 세션 재시작 |
-| Codex 신뢰 | `.codex/config.toml`·`hooks.json`은 신뢰된 프로젝트에서만 적용됩니다 | 처음 열 때 프로젝트 신뢰 허용 |
+| Codex 신뢰 | `.codex/config.toml`·`hooks.json`은 신뢰된 프로젝트에서만 적용됩니다. worktree는 폴더 경로가 달라 각각 따로 신뢰해야 할 수 있습니다 | worktree를 처음 열 때 프로젝트 신뢰 허용 |
 | API 기계 비교 범위 | `check-api.mjs`는 메서드와 경로만 비교합니다. 상수나 프로퍼티로 만든 경로는 해석하지 못합니다 | 필드 단위 대조는 `verifier`, 해석 불가 항목은 직접 확인. context-path는 `project.md`의 `API 경로 접두어`에 기록 |
-| worktree | 훅이 세션 폴더 기준이라, 별도 worktree에서 커밋하면 승인 기록 위치가 어긋날 수 있습니다 | 작업은 세션을 연 폴더에서 진행 |
-| 계획 승인 후 PRD 변경 | 계획 승인 뒤 PRD가 바뀌어도 계획 승인 기록은 자동으로 무효가 되지 않습니다 | `prd-change`가 영향받는 feature의 재계획을 안내. 재개 전 `승인 취소` 후 재승인 |
+| worktree 단위 상태 | 훅과 승인 기록(`.harness/state/`, `하네스 OFF` 포함)은 세션을 연 worktree 기준입니다. 원본 폴더 세션에서 다른 worktree 파일을 고치면 훅이 그 파일을 저장소 밖으로 보고 검사하지 않습니다 | 티켓 작업은 반드시 그 worktree 폴더에서 세션을 열어 진행 |
+| 병렬 티켓의 ID·문서 충돌 | worktree마다 `requirements.md`·`00-overview.md`·`docs/api/`를 따로 고치므로 병합 때 충돌하거나 ID가 겹칠 수 있습니다 | 새 ID는 `origin/main`과 다른 worktree의 최댓값 다음 번호로. 충돌 해결은 사람이 PR에서 |
+| 통합 브랜치 반영 후 PRD 승인 | worktree에 `main`을 병합하면 문서 해시가 바뀌어 PRD 승인이 무효가 됩니다 | 그 worktree에서 재검증 후 `PRD 승인` 다시 입력 |
+| 계획 승인 후 PRD·계획 변경 | 계획 승인 뒤 PRD나 `PLAN.md`가 바뀌어도 계획 승인 기록은 자동으로 무효가 되지 않습니다 | `feature-plan`(재계획)이 `승인 취소`를 먼저 안내하고 재승인 |
 | Codex 모델 서열 | 현재 모델 배분은 운용 전 추정입니다 | 한 프로젝트 운용 후 사용량을 보고 조정 |
 
 ## 15. 문제 해결
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| "계획 승인 기록 없음"으로 편집 차단 | 현재 브랜치에 계획 승인이 없음 | `PLAN.md`를 확인하고 `계획 승인` 입력 |
-| 승인 문구를 입력했는데 반응이 없음 | 문장 안에 넣었거나, 작업 브랜치가 아니거나, 훅이 로드되지 않음 | 한 줄로 단독 입력. 브랜치 확인. 세션 재시작 |
+| "계획 승인 기록 없음"으로 편집 차단 | 이 worktree에 계획 승인이 없음 | `PLAN.md`를 확인하고 이 worktree 세션에서 `계획 승인` 입력 |
+| "작업 브랜치가 아님"으로 편집 차단 | 원본 폴더(`main`)에서 문서·계획·코드를 고치려 함 | 원본 폴더에서 `work-start`로 worktree를 만들고 그 폴더에서 세션을 엶 |
+| Codex가 worktree 파일을 쓰지 못함 | Codex 세션을 원본 폴더에서 열고 형제 폴더 worktree를 편집하려 함(샌드박스 쓰기 범위 밖) | Codex 세션을 해당 worktree 폴더에서 다시 엶 |
+| 승인 문구를 입력했는데 반응이 없음 | 문장 안에 넣었거나, 작업 브랜치(worktree)가 아니거나, 훅이 로드되지 않음 | 한 줄로 단독 입력. worktree 폴더 세션인지 확인. 세션 재시작 |
 | 모든 도구가 "jq 미설치"로 차단 | `jq`가 PATH에 없음 | `jq` 설치 후 VS Code·터미널 재시작 ([1장](#1-요구-환경)) |
 | Windows에서 `.claude/skills/<이름>`이 한 줄짜리 파일 | 구버전(심볼릭 링크) 하네스를 `core.symlinks=false`로 받음 | "하네스 업데이트해줘"로 위임 스킬 버전으로 갱신 |
 | "PRD 승인 이후 내용이 바뀜" | 승인 후 요구사항·PRD·API 문서가 수정됨 | Claude에서 재검증 후 `PRD 승인` 다시 입력 |
 | 커밋·push가 "승인 기록 없음"으로 차단 | 승인 후 30분이 지남 | 다시 `커밋 승인`·`푸시 승인` 입력 |
-| main·develop push 차단 | 보호 브랜치 | 작업 브랜치에 push하고 PR로 병합. 사람이 꼭 직접 해야 하면 `git push --no-verify` |
+| main push 차단 | 보호 브랜치 | 작업 브랜치에 push하고 PR로 병합. 사람이 꼭 직접 해야 하면 `git push --no-verify` |
 | 커밋 메시지 형식 오류 | 제목이 `{종류}/ITD-#### 제목`이 아니거나 티켓이 브랜치와 다름 | 브랜치명과 같은 접두어로 다시 작성 |
 | 훅이 전혀 동작하지 않음 | Git 훅 미등록, Codex 프로젝트 미신뢰, Claude 세션이 하네스 설치 전에 시작됨, `하네스 OFF` 상태 | `git config core.hooksPath .githooks`, Codex에서 프로젝트 신뢰, Claude 세션 재시작, `하네스 ON` 입력 |
 | 승인 기록을 초기화하고 싶음 | | `승인 취소` 입력 (현재 브랜치 기준) |

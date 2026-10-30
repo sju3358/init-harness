@@ -64,7 +64,7 @@ fi
 if has '계획 승인'; then
   if is_work_branch "$branch"; then
     date '+%Y-%m-%dT%H:%M:%S' > "$state/plan-approved--$key"
-    echo "승인 기록: 계획 승인 ($branch). PLAN.md 상태를 '승인됨'으로 갱신하고 구현을 시작할 것."
+    echo "승인 기록: 계획 승인 ($branch). PLAN.md 상태를 '승인됨'으로 갱신하고 HANDOFF.md 다음 행동을 Codex implement로 적을 것."
   else
     echo "계획 승인 기록 실패: 현재 브랜치($branch)가 작업 브랜치(feat|fix/ITD-####)가 아님. 사용자에게 알릴 것."
   fi
