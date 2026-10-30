@@ -27,5 +27,5 @@ description: 승인된 PRD·API 문서를 바꿔야 할 때 쓴다. Codex가 art
 
 - `prd-verify`를 실행한다. 프롬프트에 변경 범위(REQ, 문서#섹션)를 주되, 검증자는 그 REQ가 인용된 모든 문서를 다시 본다.
 - PRD 내용이 바뀌었으므로 기존 PRD 승인 기록은 해시 불일치로 무효가 된다. `PRD 승인`을 다시 받는다.
-- 이 feature에 계획이 이미 있으면 `feature-plan`(재계획)으로 계획을 다시 맞추고 `계획 승인`부터 다시 받은 뒤 Codex가 재개한다.
+- 이 feature에 계획이 이미 있으면 `feature-plan`(재계획)으로 계획을 다시 맞추고 `계획 승인`부터 다시 받은 뒤 `implement`로 재개한다.
 - 다른 worktree에서 진행 중인 feature가 영향받으면 그 worktree(`git worktree list`)를 알려준다. 그쪽은 이 변경이 통합 브랜치에 병합된 뒤 반영한다.

@@ -20,7 +20,7 @@
 
 ## 작업 단위와 worktree
 
-- 티켓 하나 = feature 하나 = 브랜치(`feat|fix/ITD-####`) 하나 = worktree 하나. 그 feature의 요구사항·PRD·API 문서·개발계획(Claude)과 구현·테스트·검증(Codex)을 같은 브랜치에서 진행한다.
+- 티켓 하나 = feature 하나 = 브랜치(`feat|fix/ITD-####`) 하나 = worktree 하나. 그 feature의 요구사항·PRD·API 문서·개발계획·구현(Claude)과 테스트·검증(Codex)을 같은 브랜치에서 진행한다.
 - 원본 폴더(clone한 폴더)는 항상 통합 브랜치(`main`)로 둔다. 원본 폴더에서는 `project-init`, `work-start`(worktree 생성), 하네스 도입·업데이트만 하고 문서·계획·코드를 편집하지 않는다(`edit-guard` 훅이 차단).
 - 세션은 worktree 폴더(`../<원본 폴더명>-ITD-####`)에서 연다. 승인 기록(`.harness/state/`)은 worktree마다 따로 남고, Codex는 세션 폴더 밖에 쓸 수 없기 때문이다.
 - 동시에 편집하는 세션마다 자기 worktree를 쓴다. Claude가 두 티켓을 동시에 진행해도 되고, Claude가 다음 티켓 문서를 쓰는 동안 Codex가 앞 티켓을 구현해도 된다. 한 worktree에서는 Claude → Codex 순서로 이어 받고, 두 세션이 동시에 편집하지 않는다.
@@ -39,14 +39,25 @@
 | ✋ PRD 승인 | Claude | `prd-verify` | `00-overview.md`·`docs/api/README.md` 상태 `승인 vX.Y` | 사용자가 `PRD 승인` 입력. API 문서도 함께 승인됨 |
 | C4 개발계획 | Claude | `feature-plan` | `artifacts/work/F-##/PLAN.md` | REQ ↔ 변경 파일 ↔ TC 매핑, 확인 필요 항목 답변 완료 |
 | ✋ 계획 승인 | Claude | `feature-plan` | 승인 기록 | 사용자가 `계획 승인` 입력 |
-| X1 구현 | Codex | `implement` | 소스 | 빌드 통과, 계획 이탈은 `HANDOFF.md` "계획 변경 요청" |
-| X2 문서-코드 검증 | Codex | `doc-code-verify` | `VERIFY.md` | `verifier` 판정표, REQ마다 `파일:줄` 근거 |
-| X2b API 검증 | Codex | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정 |
-| X3 테스트 작성 | Codex | `test-write` | 테스트 코드 | `PLAN.md`의 TC 전부 구현 |
-| X4 테스트 검증 | Codex | `test-verify` | `TEST-REPORT.md`, `docs/traceability.md` | 테스트 실행 결과 원문, `check-trace.sh feature` 통과, `verifier`의 테스트 유효성 판정 |
-| ✋ 커밋·푸시 승인 | Claude | `itd-commit` | 커밋, 작업 브랜치 push | 사용자가 같은 worktree의 Claude 세션에서 `커밋 승인`·`푸시 승인` 입력 |
+| C5 구현 | Claude | `implement` | 소스·빌드 파일 | 컴파일 통과. 파일 묶음마다 `HANDOFF.md` "진행 위치" 갱신. 계획 이탈은 `PLAN.md` "계획 변경 이력"과 재승인 |
+| X1 문서-코드 검증 | Codex | `doc-code-verify` | `VERIFY.md` | `verifier` 판정표, REQ마다 `파일:줄` 근거 |
+| X1b API 검증 | Codex | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정 |
+| X2 테스트 작성 | Codex | `test-write` | 테스트 코드 | `PLAN.md`의 TC 전부 구현 |
+| X3 테스트 검증 | Codex | `test-verify` | `TEST-REPORT.md`, `docs/traceability.md` | 테스트 실행 결과 원문, `check-trace.sh feature` 통과, `verifier`의 테스트 유효성 판정 |
+| ✋ 커밋·푸시 승인 | Claude | `itd-commit` | 커밋, 작업 브랜치 push | 테스트·검증 미완료면 경고 1회 후 사용자 판단. 사용자가 `커밋 승인`·`푸시 승인` 입력 |
 
-커밋·push는 Claude만 한다. worktree의 Git 메타데이터(`index.lock`, `objects`, `refs`)가 원본 폴더 `.git/`에 있어 Codex 샌드박스(worktree 폴더만 쓰기 가능)에서는 `git add`·`git commit`·`git merge`가 실패하기 때문이다. Codex는 `test-verify`를 마치면 `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 멈춘다.
+- 구현은 Claude만 한다. 한 티켓의 코드를 한 모델이 써서 스타일을 일관되게 유지하기 위함이다. Codex의 소스·빌드 파일 편집은 `edit-guard` 훅이 차단한다.
+- 테스트 작성과 검증은 Codex가 한다. 구현과 다른 모델이 보게 해서 작성자와 검증자를 나눈다. Claude의 테스트 코드(`src/test`) 편집은 훅이 차단한다.
+- 커밋·push는 Claude만 한다. worktree의 Git 메타데이터(`index.lock`, `objects`, `refs`)가 원본 폴더 `.git/`에 있어 Codex 샌드박스(worktree 폴더만 쓰기 가능)에서는 `git add`·`git commit`·`git merge`가 실패하기 때문이다. Codex는 `test-verify`를 마치면 `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 멈춘다.
+- 테스트·검증이 끝나지 않아도 커밋·push를 막지 않는다. `itd-commit`이 미충족 항목을 근거와 함께 1회 경고하고, 사용자가 진행 여부를 정한다. 진행하면 커밋 본문에 `- 미검증: <항목>`을 남긴다.
+
+### 세션 끊김 대비
+
+Claude는 사용량 한도나 계정 전환으로 세션이 끊길 수 있다. 맥락은 대화가 아니라 파일로 이어 간다.
+
+- 구현 중 파일 묶음마다 `HANDOFF.md` "진행 위치"(끝난 것, 진행 중, 다음 할 일, 결정)를 갱신한다. 작업 결과 파일은 worktree에 남는다.
+- Claude 세션이 작업 worktree에서 시작·재개·압축되면 `SessionStart` 훅(`.harness/hooks/session-context.sh`)이 `HANDOFF.md`의 상태·진행 위치와 `git status`를 컨텍스트로 넣는다.
+- Codex 세션은 시작할 때 `HANDOFF.md`를 먼저 읽는다(`AGENTS.md`).
 
 PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 않는다. 병합 후 worktree 정리(`git worktree remove`, `git branch -d`)는 원본 폴더에서 사용자가 한다.
 
@@ -55,7 +66,7 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 | 게이트 | 입력 문구 | 기록 | 막는 동작 |
 | --- | --- | --- | --- |
 | PRD 승인 | `PRD 승인` | `.harness/state/prd-approved` (요구사항·PRD·API 문서 해시) | `feature-plan` 진행 |
-| 계획 승인 | `계획 승인` | `.harness/state/plan-approved--<브랜치>` | `src/`·빌드 파일 편집 |
+| 계획 승인 | `계획 승인` | `.harness/state/plan-approved--<브랜치>` | 소스·빌드 파일 편집(Claude), 테스트 코드 편집(Codex) |
 | 커밋 승인 | `커밋 승인` | `.harness/state/git-approved`(30분) | `git commit` |
 | 푸시 승인 | `푸시 승인` | `.harness/state/git-approved`(30분) | `git push` |
 | 하네스 도입 (예외) | `하네스 도입 승인` | `.harness/state/adopt-approved`(30분, 승인 브랜치 한정, push 1회 후 삭제) | 보호 브랜치 커밋·push. 하네스 파일만 허용 |
@@ -65,7 +76,7 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 - 기록은 `.harness/hooks/record-approval.sh`(UserPromptSubmit)가 사용자 문장에서만 만든다. 에이전트는 `.harness/state/`를 직접 만들거나 지우지 않는다(`approval-gate` 훅이 차단).
 - 기록은 세션을 연 worktree의 `.harness/state/`에 남는다. 승인 문구는 해당 티켓 worktree의 세션에서 입력한다. 통합 브랜치를 반영해 문서가 바뀌면 PRD 승인 해시가 달라지므로 다시 승인한다.
 - 에이전트는 승인이 필요한 시점에 멈추고, 무엇을 승인하는지 요약한 뒤 입력할 문구를 안내한다. "진행해", "ㄱㄱ" 같은 일반 응답은 승인 문구가 아니므로 문구를 다시 안내한다.
-- 계획 승인 후 계획이 바뀌어야 하면(파일 추가, 범위 변경, 신규 라이브러리) Codex는 구현을 멈추고 `HANDOFF.md` "계획 변경 요청"에 적는다. Claude가 `feature-plan`으로 `PLAN.md`를 고치고, 사용자가 `승인 취소` 후 `계획 승인`을 다시 입력한다.
+- 계획 승인 후 계획이 바뀌어야 하면(파일 추가, 범위 변경, 신규 라이브러리) Claude는 구현을 멈추고 사용자가 `승인 취소`를 입력한 뒤 `PLAN.md`를 고쳐 `계획 승인`을 다시 받는다. Codex가 테스트 작성 중 TC를 바꿔야 하면 `HANDOFF.md` "계획 변경 요청"에 적고 멈춘다.
 
 ## 대행 작업
 
@@ -74,8 +85,8 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 | # | 작업 | Claude가 대행 (Codex 영역) | Codex가 대행 (Claude 영역) | 조건 |
 | --- | --- | --- | --- | --- |
 | 1 | 기계 검사 | `check-trace.sh feature`, `check-api.mjs` | `check-trace.sh prd` | 결과 보고만. 수정은 원래 담당 |
-| 2 | 빌드·테스트 실행 | `docs/project.md` 명령 실행, `TEST-REPORT.md` "실행" 기록 | - | 실패해도 코드 수정 안 함 |
-| 3 | 검증 대행 | `doc-code-verify`, `api-verify`, `test-verify` 판정 (`code-verifier`) | `prd-verify` 판정 (`verifier` mode=prd) | 검증 산출물에만 씀. 수정 루프는 원래 담당에게 넘김 |
+| 2 | 빌드·테스트 실행 | `docs/project.md` 명령 실행, `TEST-REPORT.md` "실행" 기록 | - | 실행 중에는 코드 수정 안 함 |
+| 3 | 검증 대행 | `doc-code-verify`, `api-verify`, `test-verify` 판정 (`code-verifier`, 구현 세션과 분리된 새 컨텍스트) | `prd-verify` 판정 (`verifier` mode=prd) | 검증 산출물에만 씀. 소스 결함은 "구현 수정 요청"으로 Claude `implement`, 테스트 결함은 Codex에 넘김 |
 | 4 | 인계 정리 | `HANDOFF.md` 상태·다음 행동·대행 기록 | 같음 | - |
 | 5 | 통합 브랜치 반영 | 작업 worktree에 통합 브랜치 병합 | - | 충돌 없을 때만. 충돌 시 `git merge --abort` 후 원래 담당에게 넘김 |
 | 6 | 프론트 전달 요약 | - | `docs/api/CHANGELOG.md` 기반 요약 텍스트 | 파일 수정 없음 |
@@ -85,11 +96,11 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 
 계속 금지:
 
-- Claude의 `src/`·테스트·빌드 파일 편집, Codex의 요구사항·PRD·API 문서·`PLAN.md` 편집 (`edit-guard` 훅이 차단)
-- Codex의 worktree 생성(`work-start`), 개발계획 작성, 커밋·push·병합
+- Claude의 테스트 코드 편집, Codex의 요구사항·PRD·API 문서·`PLAN.md`·소스·빌드 파일 편집 (`edit-guard` 훅이 차단)
+- Codex의 worktree 생성(`work-start`), 개발계획 작성, 구현, 커밋·push·병합
 - 병합 충돌 해결, rebase
 - 사람 승인 필요 답변란 채우기, 상태를 `승인`으로 바꾸기
-- 상대가 하던 구현·문서 작성을 이어서 하는 것. 원래 담당의 한도가 돌아오면 그쪽에서 이어 간다.
+- 상대가 하던 구현·문서·테스트 작성을 이어서 하는 것. 원래 담당의 한도가 돌아오면 그쪽에서 이어 간다.
 
 대행한 작업은 `HANDOFF.md` "대행 기록"에 남긴다. 대행 검증에서 `수정 필요`가 나오면 대행자는 고치지 않고, 원래 담당이 다음 세션에서 `HANDOFF.md`를 읽고 처리한다.
 
@@ -107,10 +118,11 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 
 되돌림은 모두 같은 worktree 안에서 `HANDOFF.md`로 인계한다.
 
-- 구현·검증 중 PRD 문제 발견 → Codex가 `HANDOFF.md` "PRD 변경 요청"에 기록하고 멈춤 → 사용자가 그 worktree의 Claude 세션에서 `prd-change` 실행 → PRD 버전 증가, 재검증, `PRD 승인` → Claude `feature-plan`으로 `PLAN.md`를 다시 맞추고 `계획 승인` → Codex 재개.
-- 구현 중 계획 이탈 → Codex가 `HANDOFF.md` "계획 변경 요청"에 기록하고 멈춤 → Claude `feature-plan`(재계획) → `승인 취소` 후 `계획 승인` → Codex 재개.
-- API 문서와 코드가 다르면 코드를 문서에 맞추는 것이 기본이다. 문서를 바꿔야 하면 위와 같이 "PRD 변경 요청"으로 처리하고 `prd-change`에서 `api-design` 3단계(변경 이력·프론트 영향)를 거친다.
-- 검증(X2·X2b·X4)에서 "수정 필요"가 나오면 X1로 돌아가 고친 뒤 해당 검증을 다시 실행한다. 고친 범위만 재검증하지 않고 같은 REQ에 걸린 항목을 모두 다시 본다.
+- 구현 중 PRD 문제 발견(Claude) → `prd-change` → 재검증, `PRD 승인` → `feature-plan`으로 `PLAN.md` 맞춤, `계획 승인` → `implement` 재개.
+- 검증 중 PRD 문제 발견(Codex) → `HANDOFF.md` "PRD 변경 요청"에 기록하고 멈춤 → 그 worktree의 Claude 세션에서 위와 같이 처리 → Codex 재검증.
+- 검증·테스트에서 소스 결함 발견(Codex) → `HANDOFF.md` "구현 수정 요청"에 기록하고 멈춤 → Claude `implement`(수정 요청 반영) → Codex가 같은 REQ에 걸린 항목을 모두 다시 검증. 고친 범위만 재검증하지 않는다.
+- 테스트 작성 중 TC를 그대로 구현할 수 없음(Codex) → `HANDOFF.md` "계획 변경 요청" → Claude `feature-plan`(재계획) → `승인 취소` 후 `계획 승인` → Codex `test-write` 재개.
+- API 문서와 코드가 다르면 코드를 문서에 맞추는 것이 기본이다. 문서를 바꿔야 하면 "PRD 변경 요청"으로 처리하고 `prd-change`에서 `api-design` 3단계(변경 이력·프론트 영향)를 거친다.
 
 ## 검증 원칙
 

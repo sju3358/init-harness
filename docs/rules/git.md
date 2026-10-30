@@ -4,7 +4,7 @@
 
 - 통합 브랜치: `docs/project.md`의 값(기본 `main`). `main`·`master`·통합 브랜치에서 직접 편집·커밋하지 않는다.
 - 원본 폴더(clone한 폴더)는 항상 통합 브랜치로 두고 브랜치를 바꾸지 않는다. 작업은 브랜치마다 만든 worktree에서 한다.
-- 작업 브랜치: ITD 티켓 하나당 feature 하나, 브랜치 하나, worktree 하나. 문서·계획(Claude)과 구현·테스트(Codex)를 같은 브랜치에서 한다.
+- 작업 브랜치: ITD 티켓 하나당 feature 하나, 브랜치 하나, worktree 하나. 문서·계획·구현(Claude)과 테스트·검증(Codex)을 같은 브랜치에서 한다.
 
 | prefix | 용도 |
 | --- | --- |

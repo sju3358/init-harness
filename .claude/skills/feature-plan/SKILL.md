@@ -5,7 +5,7 @@ description: 승인된 PRD의 feature 명세로 개발계획(artifacts/work/F-##
 
 # 개발계획
 
-계획은 Claude가 쓰고 Codex는 계획대로 구현만 한다. Codex는 `PLAN.md`를 편집하지 않는다(훅이 차단).
+계획은 Claude가 쓰고 Claude가 계획대로 구현한다. Codex는 계획의 TC로 테스트를 쓰고 검증한다. Codex는 `PLAN.md`를 편집하지 않는다(훅이 차단).
 
 ## 1. 준비
 
@@ -46,5 +46,5 @@ description: 승인된 PRD의 feature 명세로 개발계획(artifacts/work/F-##
 
 - 승인 요청 전에 요약한다: REQ 수, 변경 파일 수(신규/수정), TC 수, 신규 라이브러리·스키마 변경 여부, 남은 위험. 재계획이면 바뀐 부분.
 - `PLAN.md` 상태를 `승인 대기`로 두고, 사용자에게 `계획 승인`을 한 줄로 입력하도록 안내한다. 다른 표현은 승인으로 보지 않는다.
-- 승인 기록 메시지를 확인한 뒤 `PLAN.md` 상태를 `승인됨`으로 바꾸고 `HANDOFF.md`를 갱신한다: 담당 Codex, 단계 X1, 다음 행동 `implement`.
-- 사용자에게 같은 worktree 폴더에서 Codex 세션을 열어 "HANDOFF 읽고 이어서 진행해"라고 하도록 안내한다.
+- 승인 기록 메시지를 확인한 뒤 `PLAN.md` 상태를 `승인됨`으로 바꾸고 `HANDOFF.md`를 갱신한다: 담당 Claude, 단계 C5, 다음 행동 `implement`.
+- 재계획이 아니면 같은 세션에서 `implement`로 이어 간다. Codex "계획 변경 요청"을 반영한 재계획이면 다음 행동을 `Codex test-write`로 적고 Codex 세션에서 이어 가도록 안내한다.

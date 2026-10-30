@@ -1,6 +1,6 @@
 ---
 name: work-start
-description: ITD 티켓 하나의 작업 브랜치(feat|fix/ITD-####)와 worktree(../<원본 폴더명>-ITD-####)를 원본 폴더의 통합 브랜치에서 만든다. 티켓 하나에서 요구사항·PRD·API·계획(Claude)과 구현·테스트(Codex)를 모두 진행한다. "작업 시작", "티켓 시작", "F-01 시작", "worktree 만들어줘" 요청에 쓴다.
+description: ITD 티켓 하나의 작업 브랜치(feat|fix/ITD-####)와 worktree(../<원본 폴더명>-ITD-####)를 원본 폴더의 통합 브랜치에서 만든다. 티켓 하나에서 요구사항·PRD·API·계획·구현(Claude)과 테스트·검증(Codex)을 모두 진행한다. "작업 시작", "티켓 시작", "F-01 시작", "worktree 만들어줘" 요청에 쓴다.
 ---
 
 # 작업 시작

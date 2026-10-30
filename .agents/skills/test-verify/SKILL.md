@@ -8,7 +8,7 @@ description: 테스트를 실행하고, verifier 에이전트로 테스트가 �
 ## 1. 실행
 
 - `docs/project.md`의 단위·통합 테스트 명령을 실행한다. 결과(성공·실패·건너뜀 수)와 실패 메시지 원문을 `TEST-REPORT.md` "실행"에 적는다.
-- 실패하면 원인을 분류한다: 소스 결함 → `implement`, 테스트 결함 → `test-write`, 환경(DB·컨테이너) → 사용자에게 보고. 고친 뒤 전체 테스트를 다시 실행한다.
+- 실패하면 원인을 분류한다: 소스 결함 → `HANDOFF.md` "구현 수정 요청"(Claude `implement`), 테스트 결함 → `test-write`, 환경(DB·컨테이너) → 사용자에게 보고. 고친 뒤 전체 테스트를 다시 실행한다.
 - `sh scripts/check-trace.sh feature F-##` 출력을 "추적 검사"에 그대로 붙인다.
 
 ## 2. 유효성 판정
@@ -31,5 +31,5 @@ description: 테스트를 실행하고, verifier 에이전트로 테스트가 �
 Codex를 쓸 수 없어 사용자가 Claude에게 대행을 요청한 경우(`docs/rules/workflow.md` "대행 작업").
 
 - `verifier` 대신 `code-verifier` 에이전트를 `mode=test`로 실행한다. 메인 세션 재검증은 그대로 한다.
-- 빌드·테스트·검사 스크립트는 실행해도 된다. 소스·테스트·`PLAN.md`는 고치지 않는다(훅이 차단).
-- `수정 필요`가 나와도 `implement`·`test-write`로 돌아가지 않는다. `TEST-REPORT.md`에 판정을 남기고, `HANDOFF.md` "대행 기록"의 "원래 담당이 할 일"에 수정 항목을 적은 뒤 멈춘다.
+- 빌드·테스트·검사 스크립트는 실행해도 된다. 검증 중에는 소스·`PLAN.md`를 고치지 않고, 테스트는 고칠 수 없다(훅이 차단).
+- `수정 필요`가 나와도 테스트는 고치지 않는다. `TEST-REPORT.md`에 판정을 남기고, 소스 결함은 "구현 수정 요청"(Claude `implement`로 처리), 테스트 결함은 "대행 기록"의 "원래 담당이 할 일"에 적은 뒤 멈춘다.

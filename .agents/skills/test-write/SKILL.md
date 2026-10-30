@@ -7,7 +7,7 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
 
 ## 1. 전제
 
-- `VERIFY.md`·`API-VERIFY.md`의 `수정 필요`가 모두 해소됐는지 확인한다. 남아 있으면 `implement`로 돌아간다.
+- `VERIFY.md`·`API-VERIFY.md`의 `수정 필요`가 모두 해소됐는지 확인한다. 남아 있으면 `HANDOFF.md` "구현 수정 요청"이 Claude에서 `반영`될 때까지 멈춘다.
 - `docs/project.md`의 테스트 스택(JUnit 5, AssertJ, Mockito, Testcontainers 여부)을 따른다.
 
 ## 2. 작성
@@ -19,7 +19,7 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
   - 테스트 대상 클래스 자체를 목으로 대체
   - 구현 로직을 테스트 안에 복제해 같은 계산 결과끼리 비교
   - 단언 없는 테스트, 예외를 삼키는 테스트
-  - 실패하는 테스트를 통과시키려고 소스나 기대값을 바꾸는 것. 소스 결함이면 멈추고 보고한다(수정은 `implement`로).
+  - 실패하는 테스트를 통과시키려고 소스나 기대값을 바꾸는 것. 소스 결함이면 `HANDOFF.md` "구현 수정 요청"에 적고 멈춘다(수정은 Claude `implement`).
 - 외부 시스템(메시지 큐, 외부 API)은 `PLAN.md`가 정한 방식(Testcontainers, 목 서버 등)을 따른다. 정하지 않았으면 `HANDOFF.md` "계획 변경 요청"(`재승인 필요`)에 적고 멈춘다.
 
 ## 3. 마무리
