@@ -99,10 +99,11 @@ flowchart TD
             X2 --> X3[api-verify<br/>API 검증]
             X3 --> X4[test-write<br/>테스트 작성]
             X4 --> X5[test-verify<br/>테스트 검증]
-            X5 --> G3{{"✋ 커밋·푸시 승인"}}
         end
 
         G2 --> X1
+        X5 --> C6[Claude: itd-commit<br/>커밋·push]
+        C6 --> G3{{"✋ 커밋·푸시 승인"}}
     end
 
     G3 --> M[사용자: PR·병합 → worktree 정리]
@@ -148,12 +149,19 @@ flowchart TD
 | 문서-코드 검증 | "정합성 검증해" | `verifier`가 REQ마다 `파일:줄` 근거로 PRD와 코드를 대조합니다 | `VERIFY.md` | 수정 필요 0건 |
 | API 검증 | "API 검증해" | `check-api.mjs`로 엔드포인트 목록을 기계 비교하고, `verifier`가 파라미터·필드·에러 코드를 항목별로 대조합니다 | `API-VERIFY.md` | 불일치 0건 |
 | 테스트 작성 | "테스트 작성해" | TC마다 테스트를 쓰고 `@DisplayName("[TC-F01-03][REQ-012] ...")`처럼 ID를 붙입니다 | 테스트 코드 | `check-trace.sh feature F-01` 통과 |
-| 테스트 검증 | "테스트 검증해" | 테스트를 실행하고, `verifier`가 각 테스트가 인수 조건을 실제로 검사하는지 판정합니다 | `TEST-REPORT.md`, `docs/traceability.md` | 실패 0건, 무효·약함 판정 0건 |
-| ✋ 승인 | "커밋해줘" 후 `커밋 승인`, `푸시 승인` 입력 | `itd-commit`이 ITD 형식 메시지를 보여 주고, 승인 후 커밋하고 작업 브랜치에 push합니다 | 커밋 | |
+| 테스트 검증 | "테스트 검증해" | 테스트를 실행하고, `verifier`가 각 테스트가 인수 조건을 실제로 검사하는지 판정합니다. 끝나면 `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 멈춥니다 | `TEST-REPORT.md`, `docs/traceability.md` | 실패 0건, 무효·약함 판정 0건 |
+
+### 4-3. Claude: 커밋·푸시 (같은 worktree)
+
+| 단계 | 이렇게 말하면 | 하는 일 | 산출물 |
+| --- | --- | --- | --- |
+| ✋ 승인 | "커밋해줘" 후 `커밋 승인`, `푸시 승인` 입력 | `itd-commit`이 테스트 결과를 확인하고 ITD 형식 메시지를 보여 준 뒤, 승인 후 커밋하고 작업 브랜치에 push합니다 | 커밋 |
+
+Codex는 커밋·push하지 않습니다. worktree의 Git 메타데이터(`index.lock` 등)가 원본 폴더 `.git/`에 있어, worktree 폴더만 쓸 수 있는 Codex 샌드박스에서는 `git commit`이 권한 오류로 실패하기 때문입니다.
 
 계획 이탈의 예: 계획에 없는 파일(공통 예외 처리기 수정 등)·라이브러리·DB 스키마 변경, 기존 테스트 수정, 재사용하려던 클래스가 맞지 않음. 같은 파일 안 private 메서드 추가나 이름 조정 같은 사소한 이탈은 "계획 변경 요청"에 `기록만`으로 적고 진행합니다.
 
-Codex는 한 세션에서 구현부터 테스트 검증까지 이어서 진행합니다. 단계마다 `HANDOFF.md`를 갱신하고, 계획·PRD 변경 요청, 사람 승인 필요 항목, 커밋·푸시 승인에서만 멈춥니다. 세션이 끊기면 같은 worktree에서 새 세션을 열고 "HANDOFF 읽고 이어서 진행해"라고 합니다.
+Codex는 한 세션에서 구현부터 테스트 검증까지 이어서 진행합니다. 단계마다 `HANDOFF.md`를 갱신하고, 계획·PRD 변경 요청, 사람 승인 필요 항목, 테스트 검증 완료(커밋은 Claude로)에서만 멈춥니다. 세션이 끊기면 같은 worktree에서 새 세션을 열고 "HANDOFF 읽고 이어서 진행해"라고 합니다.
 
 ## 5. 승인 게이트
 
@@ -234,15 +242,16 @@ API 문서와 코드가 다를 때는 **코드를 문서에 맞추는 것이 기
 
 | 작업 | Claude가 대행 (Codex 영역) | Codex가 대행 (Claude 영역) |
 | --- | --- | --- |
-| 커밋·push | 구현 커밋 | 문서·계획 커밋 |
 | 기계 검사 | `check-trace.sh feature`, `check-api.mjs` | `check-trace.sh prd` |
 | 빌드·테스트 실행 | 실행하고 `TEST-REPORT.md`에 기록 | - |
 | 검증 판정 | 문서-코드, API, 테스트 유효성 (`code-verifier`) | PRD 정합성 (`verifier` mode=prd) |
 | 인계 정리 | `HANDOFF.md` 상태·대행 기록 | 같음 |
-| 통합 브랜치 반영 | 충돌 없을 때만 worktree에 병합 | 같음 |
+| 통합 브랜치 반영 | 충돌 없을 때만 worktree에 병합 | - |
 | 프론트 전달 요약 | - | `CHANGELOG.md` 기반 요약 |
 
-**대행 중에도 금지**: 상대 영역 편집(훅이 차단), Codex의 worktree 생성·개발계획 작성, 병합 충돌 해결, 승인 답변란 채우기, 상대가 하던 구현이나 문서 작성을 이어서 하기. 대행 검증에서 "수정 필요"가 나오면 대행한 쪽은 고치지 않고 `HANDOFF.md` "대행 기록"에 남깁니다.
+커밋·push는 원래 Claude 담당이라 대행 대상이 아닙니다.
+
+**대행 중에도 금지**: 상대 영역 편집(훅이 차단), Codex의 worktree 생성·개발계획 작성·커밋·push·병합, 병합 충돌 해결, 승인 답변란 채우기, 상대가 하던 구현이나 문서 작성을 이어서 하기. 대행 검증에서 "수정 필요"가 나오면 대행한 쪽은 고치지 않고 `HANDOFF.md` "대행 기록"에 남깁니다.
 
 ## 9. 예외: 하네스 도입·업데이트
 
@@ -388,6 +397,7 @@ feat/ITD-1234 주문 조회 API 추가
 | --- | --- | --- |
 | "계획 승인 기록 없음"으로 편집 차단 | 이 worktree에 계획 승인이 없음 | `PLAN.md`를 확인하고 이 worktree 세션에서 `계획 승인` 입력 |
 | "작업 브랜치가 아님"으로 편집 차단 | 원본 폴더(`main`)에서 문서·계획·코드를 고치려 함 | 원본 폴더에서 `work-start`로 worktree를 만들고 그 폴더에서 세션을 엶 |
+| Codex의 `git commit`이 `index.lock ... Permission denied`로 실패 | worktree의 Git 메타데이터가 원본 폴더 `.git/`에 있어 Codex 샌드박스 쓰기 범위 밖 | 정상 동작. 커밋·push는 같은 worktree의 Claude 세션에서 "커밋해줘" |
 | Codex가 worktree 파일을 쓰지 못함 | Codex 세션을 원본 폴더에서 열고 형제 폴더 worktree를 편집하려 함(샌드박스 쓰기 범위 밖) | Codex 세션을 해당 worktree 폴더에서 다시 엶 |
 | 승인 문구를 입력했는데 반응이 없음 | 문장 안에 넣었거나, 작업 브랜치(worktree)가 아니거나, 훅이 로드되지 않음 | 한 줄로 단독 입력. worktree 폴더 세션인지 확인. 세션 재시작 |
 | 모든 도구가 "jq 미설치"로 차단 | `jq`가 PATH에 없음 | `jq` 설치 후 VS Code·터미널 재시작 ([1장](#1-요구-환경)) |

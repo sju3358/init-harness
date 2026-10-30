@@ -24,7 +24,7 @@ description: 테스트를 실행하고, verifier 에이전트로 테스트가 �
 ## 4. 커밋 준비
 
 - 요약 보고: 테스트 결과 수, TC별 유효성, `확인 못한 부분`, 남은 `PRD 변경 요청`.
-- 남은 문제가 없으면 `HANDOFF.md` 상태를 갱신하고 `itd-commit`으로 넘어간다.
+- 남은 문제가 없으면 `HANDOFF.md` 상태를 갱신하고 다음 행동을 `Claude itd-commit`으로 적은 뒤 멈춘다. 커밋·push는 Codex가 하지 않는다. 사용자에게 같은 worktree의 Claude 세션에서 "커밋해줘"라고 하도록 안내한다.
 
 ## Claude 대행
 

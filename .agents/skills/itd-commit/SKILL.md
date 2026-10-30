@@ -1,49 +1,11 @@
 ---
 name: itd-commit
-description: ITD 티켓 커밋 컨벤션({종류}/ITD-#### 제목 + bullet 본문)으로 커밋 메시지를 만들고, 사용자의 '커밋 승인'·'푸시 승인'을 받아 커밋하고 feature 브랜치에 push한다. "커밋해줘", "커밋 메시지 만들어줘", "푸시해줘" 요청에 쓴다. Claude·Codex 공용.
+description: 커밋·푸시 요청("커밋해줘", "푸시해줘")을 받았을 때 읽는다. Codex는 커밋·push하지 않고 Claude에 넘긴다.
 ---
 
-# ITD 커밋
+# ITD 커밋 (Codex는 실행하지 않음)
 
-규칙 원문은 `docs/rules/git.md`다.
+커밋·push는 Claude 전용이다. 원본은 `.claude/skills/itd-commit/SKILL.md`이며 Codex는 이 절차를 실행하지 않는다. worktree의 Git 메타데이터가 원본 폴더 `.git/`에 있어 Codex 샌드박스에서는 `git add`·`git commit`이 쓰기 권한 오류로 실패한다.
 
-## 1. 확인
-
-- 현재 브랜치가 `feat|fix/ITD-####`(작업 worktree)인지 확인한다. 보호 브랜치(원본 폴더)면 멈춘다.
-- Codex feature 커밋이면 `TEST-REPORT.md`의 실행 결과가 있고 실패가 없는지 확인한다. 없거나 실패가 있으면 그 사실을 승인 요청에 그대로 적는다(숨기지 않음).
-- `git status`로 커밋 대상을 확인한다. 이번 feature와 무관한 변경, 비밀값(.env, 키 파일)이 있으면 제외하고 알린다.
-
-## 2. 메시지
-
-```
-{종류}/ITD-#### {티켓 제목}
-
-- 의미 단위 작업 내용
-```
-
-- 종류·티켓 번호는 브랜치명에서 가져온다. 티켓 제목은 사용자에게 묻고 그대로 쓴다(접두어 추가·삭제 금지).
-- `feat`: staged diff 근거로 3~7개 bullet. 파일 나열이 아니라 무엇을 왜 했는지.
-- `fix`: `- 원인:`, `- 해결:` 두 줄.
-- `artifacts/` 산출물, 포맷터 자동 수정, lockfile은 본문에서 뺀다.
-- 커밋은 쌓아도 된다. 이미 push한 커밋은 amend하지 않는다.
-
-## 3. 승인과 실행
-
-- 커밋 대상 파일 목록과 메시지 미리보기를 보여주고, `커밋 승인`(push까지면 `커밋 푸시 승인`)을 한 줄로 입력하도록 안내한다.
-- 승인 기록 메시지를 확인한 뒤 실행한다. 메시지는 heredoc으로 넘긴다.
-
-```bash
-git add <파일들>
-git commit -F - <<'EOF'
-feat/ITD-1234 제목
-
-- 내용
-EOF
-```
-
-- push는 `푸시 승인` 기록이 있을 때만 `git push -u origin HEAD`로 현재 브랜치만 올린다. PR은 만들지 않는다.
-- 훅에 막히면(형식 위반, 승인 만료) 우회하지 않고 메시지를 그대로 전하고 다시 승인을 요청한다.
-
-## 4. 보고
-
-커밋 해시, 제목, push 여부와 원격 브랜치를 보고한다. PR·병합은 사용자가 직접 한다고 덧붙인다.
+- `git add`, `git commit`, `git push`를 실행하지 않는다.
+- `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고, 사용자에게 같은 worktree의 Claude 세션에서 "커밋해줘"라고 하도록 안내한 뒤 멈춘다.

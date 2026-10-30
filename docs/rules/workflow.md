@@ -44,7 +44,9 @@
 | X2b API 검증 | Codex | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정 |
 | X3 테스트 작성 | Codex | `test-write` | 테스트 코드 | `PLAN.md`의 TC 전부 구현 |
 | X4 테스트 검증 | Codex | `test-verify` | `TEST-REPORT.md`, `docs/traceability.md` | 테스트 실행 결과 원문, `check-trace.sh feature` 통과, `verifier`의 테스트 유효성 판정 |
-| ✋ 커밋·푸시 승인 | Claude·Codex | `itd-commit` | 커밋, 작업 브랜치 push | 사용자가 `커밋 승인`·`푸시 승인` 입력 |
+| ✋ 커밋·푸시 승인 | Claude | `itd-commit` | 커밋, 작업 브랜치 push | 사용자가 같은 worktree의 Claude 세션에서 `커밋 승인`·`푸시 승인` 입력 |
+
+커밋·push는 Claude만 한다. worktree의 Git 메타데이터(`index.lock`, `objects`, `refs`)가 원본 폴더 `.git/`에 있어 Codex 샌드박스(worktree 폴더만 쓰기 가능)에서는 `git add`·`git commit`·`git merge`가 실패하기 때문이다. Codex는 `test-verify`를 마치면 `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 멈춘다.
 
 PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 않는다. 병합 후 worktree 정리(`git worktree remove`, `git branch -d`)는 원본 폴더에서 사용자가 한다.
 
@@ -71,19 +73,20 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 
 | # | 작업 | Claude가 대행 (Codex 영역) | Codex가 대행 (Claude 영역) | 조건 |
 | --- | --- | --- | --- | --- |
-| 1 | 커밋·push | 구현 커밋 | 문서·계획 커밋 | `itd-commit`, 기존 승인 문구 적용. staged 내용은 손대지 않음 |
-| 2 | 기계 검사 | `check-trace.sh feature`, `check-api.mjs` | `check-trace.sh prd` | 결과 보고만. 수정은 원래 담당 |
-| 3 | 빌드·테스트 실행 | `docs/project.md` 명령 실행, `TEST-REPORT.md` "실행" 기록 | - | 실패해도 코드 수정 안 함 |
-| 4 | 검증 대행 | `doc-code-verify`, `api-verify`, `test-verify` 판정 (`code-verifier`) | `prd-verify` 판정 (`verifier` mode=prd) | 검증 산출물에만 씀. 수정 루프는 원래 담당에게 넘김 |
-| 5 | 인계 정리 | `HANDOFF.md` 상태·다음 행동·대행 기록 | 같음 | - |
-| 6 | 통합 브랜치 반영 | 작업 worktree에 통합 브랜치 병합 | 같음 | 충돌 없을 때만. 충돌 시 `git merge --abort` 후 원래 담당에게 넘김 |
-| 7 | 프론트 전달 요약 | - | `docs/api/CHANGELOG.md` 기반 요약 텍스트 | 파일 수정 없음 |
-| 8 | 승인 요청 준비 | 구현 검증 결과 요약 보고 | PRD 검증 결과 요약 보고 | 승인 판단·답변란 채우기 금지 |
+| 1 | 기계 검사 | `check-trace.sh feature`, `check-api.mjs` | `check-trace.sh prd` | 결과 보고만. 수정은 원래 담당 |
+| 2 | 빌드·테스트 실행 | `docs/project.md` 명령 실행, `TEST-REPORT.md` "실행" 기록 | - | 실패해도 코드 수정 안 함 |
+| 3 | 검증 대행 | `doc-code-verify`, `api-verify`, `test-verify` 판정 (`code-verifier`) | `prd-verify` 판정 (`verifier` mode=prd) | 검증 산출물에만 씀. 수정 루프는 원래 담당에게 넘김 |
+| 4 | 인계 정리 | `HANDOFF.md` 상태·다음 행동·대행 기록 | 같음 | - |
+| 5 | 통합 브랜치 반영 | 작업 worktree에 통합 브랜치 병합 | - | 충돌 없을 때만. 충돌 시 `git merge --abort` 후 원래 담당에게 넘김 |
+| 6 | 프론트 전달 요약 | - | `docs/api/CHANGELOG.md` 기반 요약 텍스트 | 파일 수정 없음 |
+| 7 | 승인 요청 준비 | 구현 검증 결과 요약 보고 | PRD 검증 결과 요약 보고 | 승인 판단·답변란 채우기 금지 |
+
+커밋·push는 대행 대상이 아니다(원래 Claude 담당).
 
 계속 금지:
 
 - Claude의 `src/`·테스트·빌드 파일 편집, Codex의 요구사항·PRD·API 문서·`PLAN.md` 편집 (`edit-guard` 훅이 차단)
-- Codex의 worktree 생성(`work-start`)과 개발계획 작성
+- Codex의 worktree 생성(`work-start`), 개발계획 작성, 커밋·push·병합
 - 병합 충돌 해결, rebase
 - 사람 승인 필요 답변란 채우기, 상태를 `승인`으로 바꾸기
 - 상대가 하던 구현·문서 작성을 이어서 하는 것. 원래 담당의 한도가 돌아오면 그쪽에서 이어 간다.

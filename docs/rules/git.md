@@ -15,6 +15,7 @@
 - Claude·Codex 세션은 worktree 폴더에서 연다. 동시에 편집하는 세션마다 자기 worktree를 쓰고, 한 worktree에서 두 세션이 동시에 편집하지 않는다.
 - 티켓 번호는 `ITD-1234`처럼 숫자 하나이거나 `ITD-1234-5678-9012`처럼 숫자 묶음을 `-`로 이어도 된다. 브랜치·커밋 제목·worktree 폴더에 같은 번호를 그대로 쓴다.
 - 티켓 번호를 모르면 브랜치명을 짓지 않고 사용자에게 묻는다.
+- 커밋·push는 Claude가 작업 worktree 세션에서 `itd-commit`으로 한다. Codex는 커밋·push·병합하지 않는다(worktree의 Git 메타데이터가 원본 폴더 `.git/`에 있어 Codex 샌드박스에서 쓰기가 막힘).
 - PR 생성과 병합은 사람이 한다. 에이전트는 작업 브랜치까지만 push한다. 보호 브랜치 push는 `.githooks/pre-push`가 막는다.
 - 병합 후 정리는 원본 폴더에서 사용자가 한다: `git pull`, `git worktree remove ../<원본 폴더명>-ITD-####`, `git branch -d feat/ITD-####`.
 

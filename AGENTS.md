@@ -15,10 +15,12 @@
 | API 문서와 코드 대조 | `api-verify` |
 | 테스트 코드 작성 | `test-write` |
 | 테스트 실행·검증 | `test-verify` |
-| 커밋·푸시 | `itd-commit` |
+| 커밋·푸시 요청 | `itd-commit` (Claude로 넘기는 안내만) |
+
+- Codex는 `git add`·`git commit`·`git push`를 하지 않는다. worktree의 Git 메타데이터가 원본 폴더 `.git/`에 있어 Codex 샌드박스에서는 쓰기 권한 오류로 실패한다. 커밋·push는 같은 worktree의 Claude 세션이 `itd-commit`으로 한다.
 
 - 검증은 `verifier` 에이전트(`.codex/agents/`)에게 맡긴다. 구현한 세션이 자기 코드를 "검증 완료"로 보고하지 않는다.
 - 에이전트는 `fork_turns: "none"`으로 실행하고 필요한 입력은 프롬프트로만 준다. 실행 뒤에는 `wait_agent`를 `timeout_ms: 1800000`으로 호출해 완료를 기다리고, 시간이 초과되면 같은 값으로 다시 기다린다. 대기 중에 짧은 timeout으로 반복 확인하거나 `send_message`로 진행 상황을 묻지 않는다(호출마다 메인 세션 컨텍스트 전체가 다시 전송됨).
-- 한 feature는 한 세션에서 `implement`부터 `test-verify`까지 이어서 진행한다. 스킬을 마칠 때마다 `HANDOFF.md` 다음 행동을 갱신하고 다음 스킬로 넘어간다. 멈추는 곳은 사용자 판단이 필요한 지점(계획 변경 요청·PRD 변경 요청, 사람 승인 필요 항목, 커밋·푸시 승인)뿐이다. 세션이 끊겨 새로 열면 `artifacts/work/<F-xx>/HANDOFF.md`를 먼저 읽고 이어서 진행한다.
-- Claude를 쓸 수 없을 때 사용자가 요청하면 `docs/rules/workflow.md` "대행 작업" 범위에서만 대신한다. 문서 커밋·push(`itd-commit`), `check-trace.sh prd` 실행, PRD 검증 판정(`prd-verify`, 에이전트는 `verifier` mode=prd), API 변경 요약 작성이 해당한다. 요구사항·PRD·API 문서는 대행 중에도 고치지 않고, 한 일은 `HANDOFF.md` "대행 기록"에 남긴다.
+- 한 feature는 한 세션에서 `implement`부터 `test-verify`까지 이어서 진행한다. 스킬을 마칠 때마다 `HANDOFF.md` 다음 행동을 갱신하고 다음 스킬로 넘어간다. 멈추는 곳은 사용자 판단이 필요한 지점(계획 변경 요청·PRD 변경 요청, 사람 승인 필요 항목)과 `test-verify` 완료(다음 행동 `Claude itd-commit`)뿐이다. 세션이 끊겨 새로 열면 `artifacts/work/<F-xx>/HANDOFF.md`를 먼저 읽고 이어서 진행한다.
+- Claude를 쓸 수 없을 때 사용자가 요청하면 `docs/rules/workflow.md` "대행 작업" 범위에서만 대신한다. `check-trace.sh prd` 실행, PRD 검증 판정(`prd-verify`, 에이전트는 `verifier` mode=prd), API 변경 요약 작성이 해당한다. 요구사항·PRD·API 문서는 대행 중에도 고치지 않고, 한 일은 `HANDOFF.md` "대행 기록"에 남긴다.
 - 파일은 에디터 도구(apply_patch)로만 편집한다. `sed -i`, `cat >`, `tee` 같은 셸 쓰기로 `src/`나 문서를 바꾸지 않는다(승인 게이트 우회가 됨).
