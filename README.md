@@ -299,6 +299,7 @@ my-project-ITD-1235/     feat/ITD-1235   ← Claude 세션 A (PRD 작성 중)
 my-project-ITD-1240/     fix/ITD-1240    ← Claude 세션 B (계획 작성 중)
 ```
 
+- 티켓 번호는 `ITD-1234`처럼 숫자 하나이거나 `ITD-1234-5678-9012`처럼 숫자 묶음을 `-`로 이어도 됩니다. 브랜치·커밋 제목·worktree 폴더에 같은 번호를 그대로 씁니다.
 - 티켓 번호를 모르면 에이전트가 브랜치명을 짓지 않고 사용자에게 묻습니다.
 - 병렬 티켓끼리 ID가 겹치지 않도록, 새 `REQ`·`F`·`API` ID는 `origin/main`과 다른 worktree에서 쓰인 최댓값 다음 번호로 정합니다.
 - 병합 후 정리(원본 폴더에서 사용자가 실행): `git pull`, `git worktree remove ../my-project-ITD-1234`, `git branch -d feat/ITD-1234`.
@@ -337,7 +338,7 @@ feat/ITD-1234 주문 조회 API 추가
 
 | 위치 | 모델 | 용도 | 설정 파일 |
 | --- | --- | --- | --- |
-| Claude 메인 | Opus 5.5 | 요구사항 도출, PRD·API 문서 작성, 개발계획 | `.claude/settings.json` |
+| Claude 메인 | Opus 5.5 | worktree 생성, 요구사항 도출, PRD·API 문서 작성, 개발계획, 커밋·push | `.claude/settings.json` |
 | Claude `prd-verifier` | Opus 5.5 | PRD 정합성 검증 | `.claude/agents/prd-verifier.md` |
 | Claude `code-verifier` | Opus 5.5 | 구현 검증 대행 | `.claude/agents/code-verifier.md` |
 | Codex 메인 | gpt-6.1-sol, medium | 구현, 테스트 작성 | `.codex/config.toml` |
