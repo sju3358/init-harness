@@ -61,7 +61,7 @@ is_protected_branch() {
 }
 
 is_work_branch() {
-  printf '%s' "$1" | grep -qE '^(feat|fix)/ITD-[0-9]+$'
+  printf '%s' "$1" | grep -qE '^(feat|fix)/ITD-[0-9]+(-[0-9]+)*$'
 }
 
 # 커밋 메시지·heredoc 본문을 명령으로 오인하지 않도록 heredoc 본문과 따옴표 문자열을 지운 실행 구문

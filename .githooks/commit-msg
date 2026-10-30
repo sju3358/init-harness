@@ -12,9 +12,9 @@ case "$title" in
   Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
 esac
 
-printf '%s' "$branch" | grep -qE '^(feat|fix)/ITD-[0-9]+$' || exit 0
+printf '%s' "$branch" | grep -qE '^(feat|fix)/ITD-[0-9]+(-[0-9]+)*$' || exit 0
 
-if ! printf '%s' "$title" | grep -qE '^(feat|fix)/ITD-[0-9]+ .+'; then
+if ! printf '%s' "$title" | grep -qE '^(feat|fix)/ITD-[0-9]+(-[0-9]+)* .+'; then
   echo "commit-msg: 제목 형식 위반. '{종류}/ITD-#### 제목' (예: $branch 사용자 조회 API 추가)" >&2
   exit 1
 fi
