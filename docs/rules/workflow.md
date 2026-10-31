@@ -35,13 +35,13 @@
 | C1 요구사항 | Claude | `req-gather` | `docs/requirements.md` | 이 티켓의 요구사항마다 REQ ID·출처·인수 기준, 미결 질문 분리 |
 | C2 PRD | Claude | `prd-write` | `docs/prd/**` | 이 티켓의 모든 REQ가 PRD 어딘가에 반영, feature 명세 확정 |
 | C2b API 문서 | Claude | `api-design` | `docs/api/**` | PRD의 모든 API가 필드·에러까지 문서화, 프론트 전달용 요약 |
-| C3 검증 | Claude | `prd-verify` | `docs/verification/prd-verify.md` | `prd-verifier`(새 컨텍스트) 판정표(요구사항 ↔ PRD ↔ API), `check-trace.sh prd` 통과 |
+| C3 검증 | Claude | `prd-verify` | `docs/verification/prd-verify.md` | `prd-verifier`(새 컨텍스트) 판정표(요구사항 ↔ PRD ↔ API), `check-trace.sh prd` 통과. 마지막 전체 회차 `승인 가능`(차단 0건) 후 문서 변경 없음 |
 | ✋ PRD 승인 | Claude | `prd-verify` | `00-overview.md`·`docs/api/README.md` 상태 `승인 vX.Y` | 사용자가 `PRD 승인` 입력. API 문서도 함께 승인됨 |
 | C4 개발계획 | Claude | `feature-plan` | `artifacts/work/F-##/PLAN.md` | REQ ↔ 변경 파일 ↔ TC 매핑, 확인 필요 항목 답변 완료 |
 | ✋ 계획 승인 | Claude | `feature-plan` | 승인 기록 | 사용자가 `계획 승인` 입력 |
 | C5 구현 | Claude | `implement` | 소스·빌드 파일 | 컴파일 통과. 파일 묶음마다 `HANDOFF.md` "진행 위치" 갱신. 계획 이탈은 `PLAN.md` "계획 변경 이력"과 재승인 |
-| X1 문서-코드 검증 | Codex | `doc-code-verify` | `VERIFY.md` | `verifier` 판정표, REQ마다 `파일:줄` 근거 |
-| X1b API 검증 | Codex | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정 |
+| X1 문서-코드 검증 | Codex | `doc-code-verify` | `VERIFY.md` | `verifier` 판정표, REQ마다 `파일:줄` 근거. 마지막 전체 회차 `수정 필요` 없음, 그 뒤 소스 변경 없음 |
+| X1b API 검증 | Codex | `api-verify` | `API-VERIFY.md` | `check-api.mjs` 통과, `verifier`(mode=api) 엔드포인트·항목별 판정. 마지막 전체 회차 불일치 없음, 그 뒤 소스 변경 없음 |
 | X2 테스트 작성 | Codex | `test-write` | 테스트 코드 | `PLAN.md`의 TC 전부 구현 |
 | X3 테스트 검증 | Codex | `test-verify` | `TEST-REPORT.md`, `test-status.md`, `docs/traceability.md` | 모든 TC `PASS`(실행 결과 원문), `check-trace.sh feature` 통과, `verifier`의 테스트 유효성 판정. 첫 실패에서 멈춰 버그 리포트. 완료는 전체 회귀 실패 0건(이후 소스·테스트 변경 없음)일 때만 |
 | ✋ 커밋·푸시 승인 | Claude | `itd-commit` | 커밋, 작업 브랜치 push | 테스트·검증 미완료면 경고 1회 후 사용자 판단. 사용자가 `커밋 승인`·`푸시 승인` 입력 |
@@ -131,6 +131,9 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 ## 검증 원칙
 
 - 작성자와 검증자를 분리한다. 검증은 새 컨텍스트의 에이전트가 원문(요구사항·PRD·코드·테스트 결과)을 직접 읽고 판정한다.
+- 수정 후 재검증은 영향 범위만 한다(`범위: 영향`). 직전 회차의 지적 항목과, 바뀐 문서·소스에 걸린 REQ(API 검증은 엔드포인트)가 대상이다. 그 REQ가 인용된 문서·코드는 모두 다시 본다.
+- 다음 단계로 넘어가기 전에 전체 검증(`범위: 전체`) 1회가 필수다. 마지막 전체 회차가 통과하고 그 뒤 대상(문서·소스)이 바뀌지 않아야 한다. 첫 회차가 전체이고 바로 통과했으면 그 회차로 충족한다. PRD 검증은 `PRD 승인` 훅이 회차의 문서 해시로 강제하고, Codex 검증은 각 스킬의 다음 단계 조건과 `itd-commit` 확인으로 지킨다. 테스트는 `test-verify`의 선별 재실행·전체 회귀가 같은 구조다.
+- PRD 검증 지적은 `차단`(누락·모순·변형·근거 없음 등 해석이 갈리는 것)과 `권고`(의미가 바뀌지 않는 문구·표기)로 나눈다. `권고`만 남으면 통과다. 최종 전체 회차의 권고는 고치면 문서가 바뀌어 전체 검증을 다시 해야 하므로 목록으로 보고한다.
 - 검증 에이전트의 결과를 그대로 사용자에게 넘기지 않는다. 메인 세션이 위험이 큰 항목(사람이 바로 승인할 항목, 구체적이지만 주관적인 "일치" 주장, "변경 없음" 단정)을 골라 직접 재현해 본 뒤 보고한다. 재현 결과가 다르면 나머지 "통과" 항목도 다시 확인한다.
 - "확인 못한 부분"은 "통과"와 같은 비중으로 생략 없이 보고한다.
 - 테스트 통과 주장에는 실제 실행 명령과 결과 요약(성공·실패 수)을 붙인다. 실행하지 않은 테스트를 통과로 쓰지 않는다.

@@ -94,6 +94,19 @@ prd_hash() {
     | sha256
 }
 
+# docs/verification/prd-verify.md에서 마지막 `- 범위: 전체` 회차를 "<결론>|<문서 해시>"로 출력. 전체 회차가 없으면 빈 값
+last_full_prd_round() {
+  f="$(repo_root)/docs/verification/prd-verify.md"
+  [ -f "$f" ] || return 0
+  tr -d '\r' < "$f" | awk '
+    function keep() { if (full) { c = rc; h = rh; found = 1 } }
+    /^## 회차/ { keep(); full = 0; rc = ""; rh = ""; next }
+    /^- 범위:[[:space:]]*전체/ { full = 1; next }
+    /^- 문서 해시:/ { rh = $0; sub(/^- 문서 해시:[[:space:]]*/, "", rh); sub(/[[:space:]].*$/, "", rh); next }
+    /^### 결론:/ { rc = $0; sub(/^### 결론:[[:space:]]*/, "", rc); next }
+    END { keep(); if (found) printf "%s|%s\n", c, h }'
+}
+
 # .harness/paths 목록에 속한 경로인지
 is_harness_path() {
   while IFS= read -r p; do
@@ -119,8 +132,8 @@ deny() {
 }
 
 # `하네스 OFF` 기록이 있으면 이 파일을 불러온 훅 전체 통과. `하네스 ON`으로 해제
-# record-approval.sh는 OFF 중에도 `하네스 ON`을 받아야 하고, approval-status.sh는 OFF 상태를 보여줘야 하므로 제외
+# record-approval.sh는 OFF 중에도 `하네스 ON`을 받아야 하고, approval-status.sh는 OFF 상태를 보여줘야 하며, prd-hash.sh는 출력만 하므로 제외
 case "${0##*/}" in
-  record-approval.sh|approval-status.sh) ;;
+  record-approval.sh|approval-status.sh|prd-hash.sh) ;;
   *) [ -f "$(state_dir)/harness-off" ] && exit 0 ;;
 esac

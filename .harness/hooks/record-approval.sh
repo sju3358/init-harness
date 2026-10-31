@@ -51,13 +51,28 @@ if has '하네스 도입 승인|하네스 업데이트 승인'; then
   fi
 fi
 
+# 다음 단계 전 전체 검증 1회 필수: 마지막 전체 회차가 `승인 가능`이고 그 회차의 문서 해시가 지금 문서와 같아야 함 (docs/rules/workflow.md 검증 원칙)
+full_round_ok() {
+  r=$(last_full_prd_round)
+  [ -n "$r" ] || { reason="docs/verification/prd-verify.md에 전체 검증 회차(- 범위: 전체)가 없음"; return 1; }
+  c=${r%%|*}
+  h=${r#*|}
+  case "$c" in
+    "승인 가능"*) ;;
+    *) reason="마지막 전체 검증 회차의 결론이 '승인 가능'이 아님(${c:-결론 없음})"; return 1 ;;
+  esac
+  [ "$h" = "$1" ] || { reason="마지막 전체 검증 회차 이후 요구사항·PRD·API 문서가 바뀜(회차 해시 ${h:-없음})"; return 1; }
+}
+
 if has 'PRD 승인'; then
   hash=$(prd_hash)
-  if [ -n "$hash" ]; then
+  if [ -z "$hash" ]; then
+    echo "PRD 승인 기록 실패: 해시 도구(shasum·sha256sum)를 찾지 못함. 사용자에게 알릴 것."
+  elif [ ! -f "$state/harness-off" ] && ! full_round_ok "$hash"; then
+    echo "PRD 승인 기록 거부: $reason. 승인 전 전체 검증 1회가 필수. prd-verify로 전체 범위 회차를 실행해 결론 '승인 가능'을 받은 뒤 사용자에게 'PRD 승인'을 다시 입력하도록 안내할 것."
+  else
     printf '%s\n' "$hash" > "$state/prd-approved"
     echo "승인 기록: PRD 승인 (요구사항·PRD·API 문서 해시 저장). 이후 docs/requirements.md·docs/prd/·docs/api/ 내용이 바뀌면 다시 승인 필요."
-  else
-    echo "PRD 승인 기록 실패: 해시 도구(shasum·sha256sum)를 찾지 못함. 사용자에게 알릴 것."
   fi
 fi
 

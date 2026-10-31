@@ -75,6 +75,7 @@ cleanup() {
   cp -p "$bak"/* "$S"/ 2>/dev/null
   rm -rf "$bak"
   git restore docs/requirements.md 2>/dev/null
+  git restore docs/verification 2>/dev/null || rm -rf docs/verification
   git switch -q "$start_branch" 2>/dev/null
 }
 trap cleanup EXIT
@@ -131,9 +132,28 @@ check "커밋 승인만으로 git push 차단" 2 "$(bash_hook approval-gate 'git
 say "커밋 푸시 승인"
 check "커밋 푸시 승인 후 git push 허용" 0 "$(bash_hook approval-gate 'git push -u origin HEAD')"
 
+# PRD 검증 회차 기록 흉내: 회차 번호, 범위, 문서 해시, 결론
+verify_round() {
+  mkdir -p docs/verification
+  printf '## 회차 %s (2026-01-01)\n- 범위: %s\n- 문서 해시: %s\n\n### 결론: %s\n\n' "$1" "$2" "$3" "$4" >> docs/verification/prd-verify.md
+}
+prd_ok() {
+  sh "$H/prd-check.sh" >/dev/null 2>&1
+  echo $?
+}
+hash=$(sh "$H/prd-hash.sh")
 say "PRD 승인"
-sh "$H/prd-check.sh" >/dev/null 2>&1
-check "'PRD 승인' 후 prd-check 유효" 0 $?
+check "전체 검증 회차 없으면 'PRD 승인' 기록 안 됨" 1 "$(prd_ok)"
+verify_round 1 전체 "$hash" "수정 후 재검증"
+verify_round 2 "영향 (직전 회차 1)" "$hash" "영향 범위 통과"
+say "PRD 승인"
+check "영향 회차만 통과하면 'PRD 승인' 기록 안 됨" 1 "$(prd_ok)"
+verify_round 3 전체 0000 "승인 가능"
+say "PRD 승인"
+check "전체 회차 이후 문서가 바뀌면 'PRD 승인' 기록 안 됨" 1 "$(prd_ok)"
+verify_round 4 전체 "$hash" "승인 가능"
+say "PRD 승인"
+check "'PRD 승인' 후 prd-check 유효" 0 "$(prd_ok)"
 printf '\n변경\n' >> docs/requirements.md
 sh "$H/prd-check.sh" >/dev/null 2>&1
 check "요구사항 변경 후 prd-check 무효" 1 $?
