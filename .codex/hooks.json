@@ -20,7 +20,7 @@
 					},
 					{
 						"type": "command",
-						"command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/codex-tool-adapter.mjs\" approval-gate"
+						"command": "node \"$(git rev-parse --show-toplevel)/.harness/hooks/codex-tool-adapter.mjs\" approval-gate codex"
 					}
 				]
 			},

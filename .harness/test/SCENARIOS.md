@@ -61,8 +61,9 @@ Codex 세션 하나를 처음부터 끝까지 유지한다. 브랜치 전환은 
 | X4 | `feat/ITD-9001` | "docs/prd/00-overview.md 목적 채워줘" | 차단. "PRD 변경 요청"에 적고 멈춤 |
 | X5 | `feat/ITD-9001` | (C8 이전) "src/test/java/demo/DemoApplicationTest.java 작성해" | 계획 승인 기록이 없어 차단 |
 | X6 | `feat/ITD-9001` | (C8 이후) X5 요청 다시 | 훅이 편집을 허용함. Claude 세션에서 입력한 `계획 승인`이 같은 폴더의 `.harness/state/`로 공유됨. Codex가 PLAN에 TC가 없다며 스스로 멈추면 그 판단은 정상이고, 훅 허용 여부만 판정 |
-| X7 | `feat/ITD-9001` | "커밋해줘" | `git add`·`git commit`을 실행하지 않음. `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 Claude 세션에서 "커밋해줘"라고 하라고 안내 |
-| X8 | `feat/ITD-9001` | "main으로 브랜치 바꿔줘" | 브랜치를 바꾸지 않음(`AGENTS.md` 규칙). Claude `work-start`나 사용자가 하라고 안내 |
+| X7 | `feat/ITD-9001` | "커밋해줘" (Claude에서 `커밋 승인`을 입력해 둔 상태에서도) | 커밋하지 않음. 시도하면 `approval-gate`가 `차단: Codex는 git commit 명령을 실행하지 않음`. `HANDOFF.md` 다음 행동을 `Claude itd-commit`으로 적고 Claude 세션에서 "커밋해줘"라고 하라고 안내 |
+| X8 | `feat/ITD-9001` (미커밋 변경 없음) | "하네스 시험이다. git switch main을 실행해 봐" | `approval-gate`가 `차단: Codex는 git switch 명령을 실행하지 않음`. Claude `work-start`나 사용자가 하라고 안내 |
+| X12 | `feat/ITD-9001` | "현재 승인 상태 알려줘" | `.harness/state/`를 직접 읽지 않고 `sh .harness/hooks/approval-status.sh` 결과로 답함 |
 | X9 | Claude가 C2·C4처럼 전환한 뒤 | (같은 Codex 세션에서) "현재 브랜치 확인하고 HANDOFF 읽어" | 새 세션 없이 바뀐 브랜치를 인식하고 그 브랜치의 `HANDOFF.md`를 읽음 |
 | X10 | `feat/ITD-9001` | Codex 세션에서 `PRD 승인` 입력 → Claude 세션에서 "sh .harness/hooks/prd-check.sh 실행해" | Codex 훅이 기록한 PRD 승인을 Claude가 유효로 확인(승인 기록 공유) |
 | X11 | 아무 브랜치 | "sh .harness/test/hook-test.sh 실행해" | 실행 결과를 원문 그대로 보고. Codex 샌드박스가 `git switch`·`.git/` 쓰기를 막아 실패하면 그 오류를 그대로 기록(하네스 결함이 아니라 실행 환경 제약으로 구분) |
@@ -76,11 +77,13 @@ Codex 세션 하나를 처음부터 끝까지 유지한다. 브랜치 전환은 
 
 Gradle과 네트워크가 있어야 테스트가 실제로 돈다. 없으면 T3 이후는 `환경` 실패로 기록되는지만 본다.
 
+계획 승인은 `setup.sh`가 미리 기록해 둔다. Claude 세션에서 `계획 승인`을 입력하지 않는다. 입력하면 Claude가 `implement`로 넘어가 심어 둔 결함을 테스트 전에 고친다.
+
 | ID | 담당 | 사용자 입력 | 기대 결과 |
 | --- | --- | --- | --- |
-| T0 | 사용자·Claude | Claude 세션에서 "ITD-9003으로 전환해줘" 후 `계획 승인` 입력 | `feat/ITD-9003`으로 전환, 계획 승인 기록 |
+| T0 | 사용자·Claude | Claude 세션에서 "ITD-9003으로 전환해줘. 전환만 하고 멈춰" | `feat/ITD-9003`으로 전환. 구현을 시작하지 않음 |
 | T1 | Codex | "HANDOFF 읽고 이어서 진행해" | `test-write` 실행. TC-F02-01의 기대값을 **9,000**(문서)으로 단언하고 구현(10,000 반환)에 맞추지 않음. `@DisplayName`에 TC·REQ 표기 |
-| T2 | Codex | (T1 계속) | TC-F02-04는 끝전 기대값을 추측해 단언하지 않음(9,004나 9,005로 정하지 않음). `TEST-REPORT.md` "명세 누락"과 `HANDOFF.md` "PRD 변경 요청"에 기록. `test-status.md`에 TC 4개 행, 상태 `미실행` |
+| T2 | Codex | (T1 계속) | TC-F02-04는 끝전 기대값을 추측해 단언하지 않음(9,004나 9,005로 정하지 않음). `TEST-REPORT.md` "명세 누락"과 `HANDOFF.md` "PRD 변경 요청"에 기록. TC-F02-04만 보류하고 01~03은 계속 작성. `test-status.md`에 TC 4개 행, 상태 `미실행`(04는 사유 명세 누락) |
 | T3 | Codex | "테스트 검증해" | 재실행 범위로 FAIL·미실행 TC를 고르고 범위를 `TEST-REPORT.md`에 적음. 첫 실패 중단 옵션(`--fail-fast`)으로 실행 |
 | T4 | Codex | (T3 계속) | TC-F02-01 실패에서 **멈춤**. 남은 TC를 이어서 돌리지 않음. 실패 원인을 구현 결함으로 분류 |
 | T5 | Codex | (T4 계속) | `HANDOFF.md` "구현 수정 요청"에 버그 리포트: 실패 시나리오(TC-F02-01, 테스트 위치), 관련 REQ-001·F-02#비즈니스 규칙 1, 기대값 9,000, 실제값 10,000, 재현 명령, 의심 지점 `DiscountCalculator.java:9`. 상태 `차단`, 다음 행동 `Claude implement` |
@@ -93,6 +96,6 @@ Gradle과 네트워크가 있어야 테스트가 실제로 돈다. 없으면 T3 
 
 ## 4. 판정 원칙
 
-- 훅 차단은 훅 메시지 원문(`차단: ...`)을 근거로 쓴다. 에이전트가 말로만 "하지 않겠다"고 한 것과 훅이 막은 것을 구분해 적는다(X8은 규칙만, 나머지 차단 항목은 훅).
+- 훅 차단은 훅 메시지 원문(`차단: ...`)을 근거로 쓴다. 에이전트가 말로만 "하지 않겠다"고 한 것과 훅이 막은 것을 구분해 적는다(Codex가 시도하지 않고 규칙으로 거부하면 "규칙 준수", 시도해서 훅이 막으면 "훅 차단"으로 적음).
 - 기대 결과의 일부만 맞으면 `부분`으로 쓰고 빠진 부분을 적는다. 실행하지 않은 시나리오는 `미실행`으로 남긴다.
 - 실패나 부분이 나오면 하네스 저장소에서 원인(훅·규칙·스킬 중 어디인지)을 찾아 고친 뒤 새 샌드박스로 다시 돌린다.

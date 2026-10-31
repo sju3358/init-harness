@@ -5,24 +5,38 @@
 #   3) 보호 브랜치(main·master·통합 브랜치)에서의 git commit 차단
 #   예외: `하네스 도입 승인`(30분, 승인 브랜치 한정)이 있으면 보호 브랜치에서
 #         .harness/paths 안의 파일만 staged된 git commit과 그 브랜치로의 git push 허용
+#   4) codex 인자로 실행되면 Codex의 커밋·push·병합·rebase·브랜치 생성·전환 차단 (AGENTS.md)
+# 사용법: approval-gate.sh [codex] (stdin: 도구 입력 JSON)
 
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
+agent=${1:-claude}
 require_jq
 cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null | tr -d '\r')
 [ -n "$cmd" ] || exit 0
 exec_cmd=$(strip_cmd "$cmd")
 
+# 승인 상태는 훅 메시지와 prd-check.sh로 확인하므로 에이전트가 이 경로를 다룰 일이 없음. 읽기 명령도 차단
 # PowerShell 명령은 경로를 역슬래시로 쓸 수 있음
-if printf '%s' "$cmd" | grep -q '\.harness[/\\]state'; then
-  printf '%s' "$exec_cmd" | grep -qE '^[[:space:]]*(ls|cat)[[:space:]]' \
-    || deny ".harness/state/는 사용자 승인 문구로만 기록됨. 에이전트가 직접 만들거나 지우지 않음 (docs/rules/workflow.md 승인 게이트)"
-fi
+printf '%s' "$cmd" | grep -q '\.harness[/\\]state' \
+  && deny ".harness/state/는 사용자 승인 문구로만 기록됨. 에이전트는 읽거나 만들거나 지우지 않음. 승인 상태는 훅 메시지와 sh .harness/hooks/prd-check.sh로 확인 (docs/rules/workflow.md 승인 게이트)"
 
 git_sub() {
   printf '%s' "$exec_cmd" | grep -qE "(^|[;&|(]|&&)[[:space:]]*git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+$1\\b"
 }
+
+if [ "$agent" = codex ]; then
+  for sub in commit push merge rebase switch; do
+    git_sub "$sub" && deny "Codex는 git ${sub} 명령을 실행하지 않음. 커밋·push는 Claude itd-commit, 브랜치 전환은 Claude work-start가 함. HANDOFF.md 다음 행동에 적고 사용자에게 알릴 것 (AGENTS.md)"
+  done
+  # git checkout은 파일 되돌리기(`--` 뒤 경로)만 허용. 브랜치 전환·생성 차단
+  if git_sub checkout && ! printf '%s' "$exec_cmd" | grep -qE '\bcheckout\b[^;&|]*[[:space:]]--[[:space:]]'; then
+    deny "Codex는 git checkout으로 브랜치를 바꾸지 않음(파일 되돌리기는 git restore <경로>). 브랜치 전환은 Claude work-start (AGENTS.md)"
+  fi
+  printf '%s' "$exec_cmd" | grep -qE '\bgit[[:space:]]+branch[[:space:]]+(-[dDmMcC]\b|--(delete|move|copy)\b|[^-[:space:]])' \
+    && deny "Codex는 브랜치를 만들거나 바꾸거나 지우지 않음. 브랜치 작업은 Claude work-start (AGENTS.md)"
+fi
 
 approved() {
   f="$(state_dir)/git-approved"

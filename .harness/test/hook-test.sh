@@ -1,7 +1,7 @@
 #!/bin/sh
 # 하네스 훅 자동 검사. setup.sh로 만든 샌드박스에서만 실행 (사용자 승인 문구 입력을 흉내 내 .harness/state/를 직접 바꾸기 때문)
 # 사용법 (샌드박스 루트에서): sh .harness/test/hook-test.sh
-# 각 훅에 도구 입력 JSON을 넣어 통과(0)·차단(2)을 확인하고, 끝나면 승인 기록을 비우고 처음 브랜치로 돌아감
+# 각 훅에 도구 입력 JSON을 넣어 통과(0)·차단(2)을 확인하고, 끝나면 시작 전 승인 기록으로 되돌리고 처음 브랜치로 돌아감
 # 실패가 하나라도 있으면 exit 1
 
 set -u
@@ -43,6 +43,13 @@ patch_codex() {
   case "$out" in *'"deny"'*) echo 2 ;; *) echo 0 ;; esac
 }
 
+# Codex 셸 명령을 어댑터로 → 차단이면 2
+bash_codex() {
+  out=$(jq -nc --arg c "$1" '{tool_name:"shell",tool_input:{command:$c}}' \
+    | node "$H/codex-tool-adapter.mjs" approval-gate codex 2>/dev/null)
+  case "$out" in *'"deny"'*) echo 2 ;; *) echo 0 ;; esac
+}
+
 bash_hook() {
   jq -nc --arg c "$2" '{tool_name:"Bash",tool_input:{command:$c}}' | sh "$H/$1.sh" >/dev/null 2>&1
   echo $?
@@ -61,8 +68,12 @@ reset_state() {
   rm -f "$S"/prd-approved "$S"/plan-approved--* "$S"/git-approved "$S"/adopt-approved "$S"/harness-off
 }
 
+bak=$(mktemp -d)
+cp -p "$S"/* "$bak"/ 2>/dev/null
 cleanup() {
   reset_state
+  cp -p "$bak"/* "$S"/ 2>/dev/null
+  rm -rf "$bak"
   git restore docs/requirements.md 2>/dev/null
   git switch -q "$start_branch" 2>/dev/null
 }
@@ -147,6 +158,36 @@ check "git status 허용" 0 "$(bash_hook git-safety-guard 'git status')"
 check "git switch -c 허용" 0 "$(bash_hook git-safety-guard 'git switch -c feat/ITD-9002')"
 check "따옴표 안의 금지 명령 문자열은 명령으로 보지 않음" 0 "$(bash_hook git-safety-guard "git status && echo 'git reset --hard'")"
 
+echo "== Codex git 제한 (승인 기록과 무관)"
+say "커밋 푸시 승인"
+check "Codex git commit 차단(커밋 승인 있어도)" 2 "$(bash_codex 'git commit -m x')"
+check "Codex git push 차단" 2 "$(bash_codex 'git push -u origin HEAD')"
+check "Codex git merge 차단" 2 "$(bash_codex 'git merge main')"
+check "Codex git rebase 차단" 2 "$(bash_codex 'git rebase main')"
+check "Codex git switch 차단" 2 "$(bash_codex 'git switch main')"
+check "Codex git checkout 브랜치 전환 차단" 2 "$(bash_codex 'git checkout main')"
+check "Codex git checkout -b 차단" 2 "$(bash_codex 'git checkout -b feat/ITD-9999')"
+check "Codex git branch 생성 차단" 2 "$(bash_codex 'git branch feat/ITD-9999')"
+check "Codex git checkout -- <경로> 허용" 0 "$(bash_codex 'git checkout -- src/test/java/demo/DemoTest.java')"
+check "Codex git branch --show-current 허용" 0 "$(bash_codex 'git branch --show-current')"
+check "Codex git status·diff·log 허용" 0 "$(bash_codex 'git status --short && git diff && git log --oneline -3')"
+check "Claude git switch -c 허용(approval-gate)" 0 "$(bash_hook approval-gate 'git switch -c feat/ITD-9002')"
+
+echo "== 승인 기록 보호와 상태 확인"
+check "승인 기록 읽기 명령(ls) 차단" 2 "$(bash_hook approval-gate 'ls .harness/state')"
+check "cat으로 시작해 뒤에서 지우는 명령 차단" 2 "$(bash_hook approval-gate "cat README.md; rm .harness/state/$key")"
+check "PowerShell 역슬래시 경로 차단" 2 "$(bash_hook approval-gate 'Get-Content .harness\state\git-approved')"
+check "상태 스크립트 실행은 허용" 0 "$(bash_hook approval-gate 'sh .harness/hooks/approval-status.sh')"
+out=$(sh "$H/approval-status.sh")
+case "$out" in *"커밋·푸시 승인: 커밋 푸시 (남은 시간"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: 커밋·푸시 승인과 남은 시간 표시" 0 $r
+say "계획 승인"
+case "$(sh "$H/approval-status.sh")" in *"계획 승인: 있음"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: 계획 승인 있음 표시" 0 $r
+say "승인 취소"
+case "$(sh "$H/approval-status.sh")" in *"계획 승인: 없음"*"커밋·푸시 승인: 없음"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: 승인 취소 후 없음 표시" 0 $r
+
 echo "== Git 훅"
 msg=$(mktemp)
 printf 'feat/ITD-9001 제목\n\n- 내용\n' > "$msg"
@@ -168,6 +209,8 @@ echo "== 세션 인계"
 out=$(sh "$H/session-context.sh" 2>/dev/null)
 case "$out" in *"artifacts/work/F-01/HANDOFF.md"*"## 진행 위치"*) r=0 ;; *) r=1 ;; esac
 check "session-context: 작업 브랜치에서 HANDOFF 상태·진행 위치 출력" 0 $r
+case "$out" in *"== 승인 상태"*"계획 승인:"*) r=0 ;; *) r=1 ;; esac
+check "session-context: 승인 상태 출력" 0 $r
 git switch -q main
 out=$(sh "$H/session-context.sh" 2>/dev/null)
 check "session-context: main에서는 출력 없음" "" "$out"
@@ -176,6 +219,8 @@ git switch -q feat/ITD-9001
 echo "== 하네스 OFF/ON"
 say "하네스 OFF"
 check "OFF 중 Claude 테스트 편집 통과" 0 "$(edit claude src/test/java/demo/DemoTest.java)"
+case "$(sh "$H/approval-status.sh")" in *"하네스: OFF"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: OFF 중에도 OFF 상태 표시" 0 $r
 say "하네스 ON"
 check "ON 후 Claude 테스트 편집 다시 차단" 2 "$(edit claude src/test/java/demo/DemoTest.java)"
 

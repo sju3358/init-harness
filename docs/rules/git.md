@@ -41,5 +41,6 @@
 - `pkill`, `killall`, Windows `taskkill /IM`, `Stop-Process -Name` (포트로 지정해 종료)
 - 승인 기록 없는 `git commit`, `git push`
 - 보호 브랜치 커밋·push (예외: `harness-adopt`의 `하네스 도입 승인`, 하네스 파일만. `workflow.md` "예외" 참고)
+- Codex의 `git commit`·`push`·`merge`·`rebase`·`switch`, 브랜치 전환용 `git checkout`, `git branch <이름>` (승인 기록과 무관하게 차단. 파일 되돌리기는 `git restore <경로>`)
 
 차단을 풀어야 하는 정당한 사유가 있으면 사용자가 터미널에서 직접 실행한다.

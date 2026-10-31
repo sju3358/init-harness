@@ -119,5 +119,8 @@ deny() {
 }
 
 # `하네스 OFF` 기록이 있으면 이 파일을 불러온 훅 전체 통과. `하네스 ON`으로 해제
-# record-approval.sh는 OFF 중에도 `하네스 ON`을 받아야 하므로 제외
-[ "${0##*/}" != record-approval.sh ] && [ -f "$(state_dir)/harness-off" ] && exit 0
+# record-approval.sh는 OFF 중에도 `하네스 ON`을 받아야 하고, approval-status.sh는 OFF 상태를 보여줘야 하므로 제외
+case "${0##*/}" in
+  record-approval.sh|approval-status.sh) ;;
+  *) [ -f "$(state_dir)/harness-off" ] && exit 0 ;;
+esac

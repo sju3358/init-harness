@@ -59,8 +59,8 @@
 Claude는 사용량 한도나 계정 전환으로 세션이 끊길 수 있다. 맥락은 대화가 아니라 파일로 이어 간다.
 
 - 구현 중 파일 묶음마다 `HANDOFF.md` "진행 위치"(끝난 것, 진행 중, 다음 할 일, 결정)를 갱신한다. 작업 결과 파일은 작업 브랜치의 폴더에 남는다.
-- Claude 세션이 작업 브랜치에서 시작·재개·압축되면 `SessionStart` 훅(`.harness/hooks/session-context.sh`)이 `HANDOFF.md`의 상태·진행 위치와 `git status`를 컨텍스트로 넣는다.
-- Codex 세션은 시작할 때 `HANDOFF.md`를 먼저 읽는다(`AGENTS.md`).
+- Claude 세션이 작업 브랜치에서 시작·재개·압축되면 `SessionStart` 훅(`.harness/hooks/session-context.sh`)이 `HANDOFF.md`의 상태·진행 위치, 승인 상태, `git status`를 컨텍스트로 넣는다.
+- Codex 세션은 시작할 때 `HANDOFF.md`를 먼저 읽고 `approval-status.sh`로 승인 상태를 확인한다(`AGENTS.md`).
 
 PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 않는다. 병합 후 정리(`git switch main`, `git pull`, `git branch -d`)는 사용자가 한다.
 
@@ -76,7 +76,8 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 | 취소 | `승인 취소` | 현재 브랜치 계획 승인·git 승인·도입 승인 삭제 | - |
 | 하네스 끄기·켜기 | `하네스 OFF` / `하네스 ON` | `.harness/state/harness-off` (`하네스 ON`까지 유지) | OFF 중에는 위 게이트와 훅 차단 전부 해제 |
 
-- 기록은 `.harness/hooks/record-approval.sh`(UserPromptSubmit)가 사용자 문장에서만 만든다. 에이전트는 `.harness/state/`를 직접 만들거나 지우지 않는다(`approval-gate` 훅이 차단).
+- 기록은 `.harness/hooks/record-approval.sh`(UserPromptSubmit)가 사용자 문장에서만 만든다. 에이전트는 `.harness/state/`를 읽기를 포함해 직접 다루지 않는다(`approval-gate` 훅이 차단).
+- 승인 상태는 `sh .harness/hooks/approval-status.sh`로 확인한다. Claude는 작업 브랜치 세션이 시작·재개·압축될 때 `SessionStart` 훅이 이 요약을 자동으로 넣고, Codex는 세션 시작 때 직접 실행한다.
 - 기록은 프로젝트 폴더의 `.harness/state/`에 남고 Claude·Codex가 함께 본다. 승인 문구는 해당 티켓 브랜치로 전환된 상태에서 입력한다. 계획 승인은 브랜치별로 남고, PRD 승인은 문서 해시라 다른 티켓 브랜치로 전환하거나 통합 브랜치를 반영해 문서가 바뀌면 다시 승인한다.
 - 에이전트는 승인이 필요한 시점에 멈추고, 무엇을 승인하는지 요약한 뒤 입력할 문구를 안내한다. "진행해", "ㄱㄱ" 같은 일반 응답은 승인 문구가 아니므로 문구를 다시 안내한다.
 - 계획 승인 후 계획이 바뀌어야 하면(파일 추가, 범위 변경, 신규 라이브러리) Claude는 구현을 멈추고 사용자가 `승인 취소`를 입력한 뒤 `PLAN.md`를 고쳐 `계획 승인`을 다시 받는다. Codex가 테스트 작성 중 TC를 바꿔야 하면 `HANDOFF.md` "계획 변경 요청"에 적고 멈춘다.

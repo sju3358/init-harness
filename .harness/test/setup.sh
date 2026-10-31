@@ -231,7 +231,7 @@ cat > artifacts/work/F-02/PLAN.md <<'EOF'
 
 - 브랜치: feat/ITD-9003
 - 기준 PRD: `docs/prd/features/F-02.md` (PRD 버전 v1.0)
-- 상태: 승인 대기
+- 상태: 승인됨 (하네스 검증 샌드박스: setup.sh가 계획 승인 기록을 미리 만듦)
 
 상태는 `작성 중` → `승인 대기` → `승인됨` 순서다. `승인됨`은 사용자가 `계획 승인`을 입력한 뒤에만 쓴다.
 
@@ -304,6 +304,9 @@ g push -q -u origin main feat/ITD-9001 feat/ITD-9003
 git config core.hooksPath .githooks
 chmod +x .githooks/* .harness/hooks/*.sh .harness/test/*.sh scripts/*.sh 2>/dev/null || true
 : > .git/harness-sandbox
+# feat/ITD-9003은 Codex가 바로 test-write부터 하도록 계획 승인을 미리 기록(샌드박스 전용. Claude에서 '계획 승인'을 입력하면 implement로 넘어가 심어 둔 결함이 테스트 전에 고쳐짐)
+mkdir -p .harness/state
+date '+%Y-%m-%dT%H:%M:%S' > .harness/state/plan-approved--feat_ITD-9003
 
 echo "샌드박스 생성: $dst"
 echo "로컬 원격: $origin"

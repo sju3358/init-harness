@@ -1,6 +1,6 @@
 #!/bin/sh
 # SessionStart 훅(Claude): 작업 브랜치에서 세션이 시작·재개·압축되면 인계 상태를 컨텍스트로 출력
-# 계정 전환·사용량 한도 뒤 새 세션에서도 HANDOFF.md의 상태·진행 위치와 미커밋 변경을 보고 바로 이어 가기 위함
+# 계정 전환·사용량 한도 뒤 새 세션에서도 HANDOFF.md의 상태·진행 위치, 승인 상태, 미커밋 변경을 보고 바로 이어 가기 위함
 # 출력만 하고 막지 않음
 
 dir=$(dirname "$0")
@@ -20,6 +20,10 @@ for f in "$root"/artifacts/work/F-*/HANDOFF.md; do
   awk '/^## /{ p = ($0 == "## 상태" || $0 == "## 진행 위치") } p' "$f"
 done
 [ "$found" = 1 ] || echo "(artifacts/work/F-*/HANDOFF.md 없음: 아직 feature-plan 전 단계)"
+
+echo
+echo "== 승인 상태 (sh .harness/hooks/approval-status.sh)"
+sh "$dir/approval-status.sh" | tail -n +2
 
 echo
 echo "== 미커밋 변경 (git status --short)"
