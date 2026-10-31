@@ -1,6 +1,6 @@
 ---
 name: test-write
-description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코드로 작성한다. 각 테스트에 TC·REQ ID를 달아 추적한다. "테스트 코드 작성", "테스트 짜줘" 요청에 쓴다.
+description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코드로 작성한다. 기대값은 PRD·PLAN에서만 가져오고 구현 코드는 인터페이스 확인용으로만 읽는다. 각 테스트에 TC·REQ ID를 달아 추적한다. "테스트 코드 작성", "테스트 짜줘" 요청에 쓴다.
 ---
 
 # 테스트 작성
@@ -10,7 +10,14 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
 - `VERIFY.md`·`API-VERIFY.md`의 `수정 필요`가 모두 해소됐는지 확인한다. 남아 있으면 `HANDOFF.md` "구현 수정 요청"이 Claude에서 `반영`될 때까지 멈춘다.
 - `docs/project.md`의 테스트 스택(JUnit 5, AssertJ, Mockito, Testcontainers 여부)을 따른다.
 
-## 2. 작성
+## 2. 기준
+
+- 테스트의 기대 결과는 기획·개발 문서에서만 가져온다: `docs/requirements.md`의 인수 기준, `docs/prd/features/F-##.md`·`02-common.md`의 규정, `docs/api/`의 필드·에러, `PLAN.md` TC의 시나리오와 기대 결과.
+- 구현 코드는 테스트 대상의 구조, 인터페이스(클래스·메서드·엔드포인트 시그니처), 실행 방법을 파악하는 용도로만 읽는다. 코드의 "현재 동작"을 기대값으로 삼지 않는다.
+- 문서와 구현이 다르면 기대값을 구현에 맞추지 않는다. 문서대로 단언하고, 그 테스트가 실패하면 구현 결함(버그)으로 다룬다(`test-verify` "실패 처리").
+- 문서에 없는 동작(PRD·PLAN이 침묵)은 추측으로 기대값을 정하지 않는다. 그 동작은 테스트하지 않고 `TEST-REPORT.md` "명세 누락"과 `HANDOFF.md` "PRD 변경 요청"에 적는다. TC 전체가 판정 불가면 그 TC만 작성하지 않고 `test-status.md`에 `미실행`(사유: 명세 누락)으로 둔 채 나머지 TC는 계속 작성한다. 그 TC가 `PASS`가 되기 전에는 완료 판정이 나지 않는다(`test-verify` 6단계).
+
+## 3. 작성
 
 - `PLAN.md` 테스트 케이스 표의 TC마다 테스트 메서드를 하나 이상 만든다.
 - 추적 표기: `@DisplayName("[TC-F01-03][REQ-012] 재고 부족 시 주문 거절")`처럼 TC와 REQ를 함께 적는다. `check-trace.sh`가 이 표기를 찾는다.
@@ -19,10 +26,12 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
   - 테스트 대상 클래스 자체를 목으로 대체
   - 구현 로직을 테스트 안에 복제해 같은 계산 결과끼리 비교
   - 단언 없는 테스트, 예외를 삼키는 테스트
-  - 실패하는 테스트를 통과시키려고 소스나 기대값을 바꾸는 것. 소스 결함이면 `HANDOFF.md` "구현 수정 요청"에 적고 멈춘다(수정은 Claude `implement`).
+  - 실패하는 테스트를 통과시키려고 기대값을 구현에 맞춰 바꾸는 것
+  - 구현 코드(`src/main`·빌드 파일) 수정. 셸 쓰기로도 하지 않는다. 결함은 `HANDOFF.md` "구현 수정 요청"에 적는다(수정은 Claude `implement`).
 - 외부 시스템(메시지 큐, 외부 API)은 `PLAN.md`가 정한 방식(Testcontainers, 목 서버 등)을 따른다. 정하지 않았으면 `HANDOFF.md` "계획 변경 요청"(`재승인 필요`)에 적고 멈춘다.
 
-## 3. 마무리
+## 4. 마무리
 
+- `artifacts/work/F-##/test-status.md`(없으면 `_template/`에서 복사)에 TC마다 행을 만들고 테스트 위치·관련 소스를 적는다. 새로 쓴 테스트의 상태는 `미실행`이다.
 - `sh scripts/check-trace.sh feature F-##`가 `문제 없음`이어야 한다.
-- `HANDOFF.md` 다음 행동을 `test-verify`로 갱신한다. 테스트 실행 결과는 다음 단계에서 기록한다.
+- `HANDOFF.md` 다음 행동을 `test-verify`로 갱신한다. 테스트 실행은 다음 단계에서 한다.

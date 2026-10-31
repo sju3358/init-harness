@@ -9,7 +9,7 @@ description: 승인된 PRD의 feature 명세로 개발계획(artifacts/work/F-##
 
 ## 1. 준비
 
-- 현재 브랜치가 `feat|fix/ITD-####`인지(작업 worktree인지) 확인한다. 아니면 `work-start`부터.
+- 현재 브랜치가 `feat|fix/ITD-####`인지 확인한다. 아니면 `work-start`부터.
 - `sh .harness/hooks/prd-check.sh`가 `PRD 승인 유효`를 출력해야 한다. 실패하면 출력 원문을 전하고 멈춘다(`prd-verify`·`PRD 승인` 필요).
 - `artifacts/work/F-##/`가 없으면 `cp -R artifacts/work/_template artifacts/work/F-##`로 만들고 각 파일의 `F-##`, 브랜치, PRD 버전을 채운다.
 - 재계획이면 `HANDOFF.md`의 "계획 변경 요청"·"PRD 변경 요청" 중 처리가 `대기`인 항목을 모은다. 계획 승인 기록이 남아 있으면 사용자에게 `승인 취소`를 먼저 입력하게 한다(고치는 동안 소스 편집이 열려 있지 않게).

@@ -8,11 +8,11 @@
 
 # Claude 역할: 기획·문서·계획·구현
 
-- Claude는 작업 worktree 생성, 요구사항 도출, PRD 작성, API 문서 설계, 요구사항 ↔ PRD ↔ API 정합성 검증, 개발계획(`PLAN.md`) 작성, 구현(`src/main`·빌드 파일), 작업 브랜치 커밋·push(`itd-commit`)를 맡는다.
+- Claude는 작업 브랜치 생성·전환, 요구사항 도출, PRD 작성, API 문서 설계, 요구사항 ↔ PRD ↔ API 정합성 검증, 개발계획(`PLAN.md`) 작성, 구현(`src/main`·빌드 파일), 작업 브랜치 커밋·push(`itd-commit`)를 맡는다.
 - 테스트 코드(`src/test`) 작성과 구현 검증(문서-코드·API·테스트 유효성)은 Codex가 한다. Claude의 테스트 코드 편집은 `edit-guard` 훅이 차단한다. 구현한 Claude가 자기 코드를 "검증 완료"로 보고하지 않는다.
 - 소스·빌드 파일은 계획 승인 후에만 편집한다(`edit-guard` 훅이 차단). Codex가 남긴 `HANDOFF.md` "구현 수정 요청"·"계획 변경 요청"·"PRD 변경 요청"은 각각 `implement`·`feature-plan`·`prd-change`로 처리한다.
-- 모든 편집은 `work-start`로 만든 worktree 폴더의 세션에서 한다. 원본 폴더(통합 브랜치)에서는 편집하지 않는다(`edit-guard` 훅이 차단).
-- 세션은 언제든 끊길 수 있다(사용량 한도, 계정 전환). 작업 worktree에서 세션이 시작되면 `SessionStart` 훅이 `HANDOFF.md`의 상태·진행 위치와 미커밋 변경을 보여준다. 그 내용부터 확인하고 이어 간다. 구현 중에는 파일 묶음마다 `HANDOFF.md` "진행 위치"를 갱신한다.
+- worktree를 만들지 않는다. `work-start`가 같은 폴더에서 작업 브랜치로 전환하고, 같은 세션에서 바로 이어 간다. 통합 브랜치에서는 문서·계획·코드를 편집하지 않는다(`edit-guard` 훅이 차단).
+- 세션은 언제든 끊길 수 있다(사용량 한도, 계정 전환). 작업 브랜치에서 세션이 시작되면 `SessionStart` 훅이 `HANDOFF.md`의 상태·진행 위치와 미커밋 변경을 보여준다. 그 내용부터 확인하고 이어 간다. 구현 중에는 파일 묶음마다 `HANDOFF.md` "진행 위치"를 갱신한다.
 - 스킬명이 프롬프트에 나오거나 아래 요청에 해당하면 `Skill` 도구로 호출한다. 기억으로 절차를 대신하지 않는다.
 
 | 요청 | 스킬 |
@@ -20,7 +20,7 @@
 | 프로젝트 초기 셋팅, 스택 설정 | `project-init` |
 | 진행 중 프로젝트에 하네스 도입 | `harness-adopt` |
 | 설치된 하네스를 최신 버전으로 갱신 | `harness-update` |
-| 티켓 작업 시작, worktree 만들기 | `work-start` |
+| 티켓 작업 시작, 작업 브랜치 만들기 | `work-start` |
 | 요구사항 정리, Notion 기획서 읽기 | `req-gather` |
 | PRD 작성·보완 | `prd-write` |
 | API 문서 설계·수정, 프론트 전달용 문서 | `api-design` |

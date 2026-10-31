@@ -1,6 +1,6 @@
 ---
 name: test-verify
-description: 테스트를 실행하고, verifier 에이전트로 테스트가 인수 조건을 실제로 검증하는지(유효성) 판정해 TEST-REPORT.md와 요구사항 추적표를 갱신한다. "테스트 검증", "테스트 돌려", "검증 리포트" 요청에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
+description: test-status.md 기준으로 FAIL·미실행·영향 TC만 골라 테스트를 실행하고, 첫 실패에서 멈춰 구현 결함이면 버그 리포트를 남긴다. verifier 에이전트로 테스트가 인수 조건을 실제로 검증하는지(유효성) 판정해 TEST-REPORT.md와 요구사항 추적표를 갱신한다. "테스트 검증", "테스트 돌려", "검증 리포트" 요청에 쓴다. Codex를 쓸 수 없을 때 Claude가 대행할 수 있다.
 ---
 
 # 테스트 검증

@@ -32,8 +32,8 @@
 | --- | --- | --- | --- | --- | --- |
 | F-01 | | REQ-001 | - | | 대기 |
 
-- 한 feature는 티켓·브랜치·worktree 하나에서 문서·계획·구현까지 진행하는 단위다. 여러 기능이 묶여도 한 feature로 본다.
-- feature 행은 그 feature의 worktree에서 `prd-write`가 추가하고, ITD 티켓 칸은 `work-start`에서 받은 번호로 채운다.
+- 한 feature는 티켓·브랜치 하나에서 문서·계획·구현까지 진행하는 단위다. 여러 기능이 묶여도 한 feature로 본다.
+- feature 행은 그 feature의 작업 브랜치에서 `prd-write`가 추가하고, ITD 티켓 칸은 `work-start`에서 받은 번호로 채운다.
 - 상태: `대기` · `진행` · `구현 완료` · `병합` (병합은 사람이 갱신)
 
 ## 변경 이력

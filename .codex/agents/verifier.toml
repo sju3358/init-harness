@@ -1,5 +1,5 @@
 name = "verifier"
-description = "구현한 세션과 분리된 새 컨텍스트에서 문서-코드 정합성(VERIFY.md), API 문서-코드 일치(API-VERIFY.md), 테스트 유효성(TEST-REPORT.md)을 판정할 때 사용한다. doc-code-verify, api-verify, test-verify 스킬이 호출한다. Claude 대행으로 PRD 정합성(mode=prd)도 판정한다."
+description = "구현한 세션과 분리된 새 컨텍스트에서 문서-코드 정합성(VERIFY.md), API 문서-코드 일치(API-VERIFY.md), 테스트 유효성(TEST-REPORT.md, 기대값이 문서 기준인지 포함)을 판정할 때 사용한다. doc-code-verify, api-verify, test-verify 스킬이 호출한다. Claude 대행으로 PRD 정합성(mode=prd)도 판정한다."
 model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
@@ -22,12 +22,13 @@ Claude를 쓸 수 없을 때만 씁니다. 절차·판정 기준·출력 형식�
 
 ## mode=test: 테스트 유효성 → TEST-REPORT.md "테스트 유효성"
 
-1. `PLAN.md`의 TC마다 해당 테스트 메서드를 읽습니다.
+1. 호출 프롬프트가 지정한 TC(없으면 `PLAN.md`의 모든 TC)마다 해당 테스트 메서드를 읽습니다.
 2. 판정 기준:
    - `유효`: 인수 조건의 기대 결과를 구체 값으로 단언하고, 실제 대상 코드를 호출함
    - `약함`: 일부 조건만 단언함(예: 상태 코드만 보고 본문 미확인, 예외 타입만 보고 에러 코드 미확인)
    - `무효`: 항상 통과함, 대상 코드를 목으로 대체해 자기 자신을 검사함, 구현 로직을 테스트에 복제해 같은 값을 비교함, 단언이 없음
-3. 테스트를 직접 실행해 결과가 리포트의 실행 결과와 같은지 확인합니다.
+3. 기대값의 출처를 확인합니다. 단언 값이 PRD·`PLAN.md`·API 문서의 원문과 일치해야 합니다. 문서에 근거가 없고 구현 코드의 현재 동작과만 일치하는 단언은 `무효`(구현 추종)로 판정하고 해당 문서 위치가 침묵임을 적습니다.
+4. 실행 결과는 `TEST-REPORT.md` "실행"과 `test-status.md`의 원문으로 확인합니다. 테스트 전체를 다시 실행하지 않습니다. 기록과 코드가 맞지 않아 보이는 TC만 골라 그 TC만 실행합니다.
 
 ## mode=api: API 문서-코드 대조 → API-VERIFY.md
 

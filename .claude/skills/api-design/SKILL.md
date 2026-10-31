@@ -11,7 +11,7 @@ API 문서는 PRD와 함께 승인 대상이다. 승인된 뒤 고치는 경우�
 
 - `docs/prd/00-overview.md`, `docs/prd/02-common.md`, `docs/prd/features/F-##.md`, 기존 `docs/api/**`를 읽는다.
 - 기존 프로젝트면 현재 컨트롤러 코드를 읽고 `node scripts/check-api.mjs` 출력으로 문서와 코드의 차이를 먼저 파악한다. 기존 API의 동작을 문서화할 때는 코드를 근거로 쓰고, 바꾸는 것은 PRD 근거가 있을 때만 바꾼다.
-- 작업 브랜치가 `feat|fix/ITD-####`(작업 worktree)인지 확인한다.
+- 작업 브랜치가 `feat|fix/ITD-####`인지 확인한다. 아니면 `work-start`부터.
 
 ## 1. 공통 규약 (`README.md`)
 

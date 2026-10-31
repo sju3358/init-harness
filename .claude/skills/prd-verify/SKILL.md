@@ -32,7 +32,7 @@ description: 요구사항 명세(Notion·대화에서 도출)와 작성된 PRD·
 - 사용자에게 `PRD 승인`을 한 줄로 입력하도록 안내한다. 다른 표현은 승인으로 보지 않는다.
 - 승인 기록이 생기면(훅 메시지 확인) `00-overview.md`·`requirements.md`·`docs/api/README.md`의 `- 상태:` 줄을 `승인 vX.Y (YYYY-MM-DD)`로 바꾼다. 상태 줄 외에는 아무것도 고치지 않는다(다른 내용이 바뀌면 승인 해시가 깨져 재승인 필요). `sh .harness/hooks/prd-check.sh`로 승인 유효를 확인한다.
 - 커밋은 `itd-commit`으로 한다.
-- 다음 단계: 같은 worktree에서 `feature-plan`.
+- 다음 단계: 같은 브랜치에서 `feature-plan`.
 
 ## Codex 대행
 

@@ -118,7 +118,7 @@ check_feature() {
   plan_reqs=$(ids_in 'REQ-[0-9]+' "$plan")
   plan_tcs=$(grep -E "^\| *TC-F$num-[0-9]+ *\|" "$plan" | sed -E 's/^\| *(TC-F[0-9]+-[0-9]+).*/\1/' | LC_ALL=C sort -u)
 
-  test_dirs=$(find . -type d -path '*/src/test' ! -path './waveness/*' 2>/dev/null)
+  test_dirs=$(find . -type d -path '*/src/test' 2>/dev/null)
   if [ -n "$test_dirs" ]; then
     # shellcheck disable=SC2086
     test_ids=$(grep -rhoE "REQ-[0-9]+|TC-F$num-[0-9]+" $test_dirs 2>/dev/null | LC_ALL=C sort -u)

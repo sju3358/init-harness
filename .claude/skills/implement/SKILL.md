@@ -9,7 +9,7 @@ description: 승인된 개발계획(PLAN.md)대로 feature를 구현하고, Code
 
 ## 1. 전제
 
-- 작업 worktree(`feat|fix/ITD-####`)의 세션이어야 한다. 원본 폴더(통합 브랜치)면 멈추고 해당 worktree 폴더에서 세션을 열도록 안내한다.
+- 현재 브랜치가 작업 브랜치(`feat|fix/ITD-####`)여야 한다. 통합 브랜치면 멈추고 `work-start`로 해당 티켓 브랜치로 전환하도록 안내한다.
 - `HANDOFF.md`의 "진행 위치"와 `git status`를 먼저 읽는다. 이어 하기면 거기서부터 계속한다.
 - `PLAN.md` 상태가 `승인됨`이어야 한다. 아니면 `feature-plan`으로 돌아간다. 소스 편집이 `계획 승인 기록 없음`으로 차단되면 우회하지 않고 사용자에게 `계획 승인` 입력을 요청한다.
 - `docs/prd/01-skillset.md`(규약), `docs/prd/02-common.md`(공통), `docs/project.md`(명령), `docs/api/`(이 feature의 엔드포인트)를 읽는다.
@@ -34,4 +34,4 @@ description: 승인된 개발계획(PLAN.md)대로 feature를 구현하고, Code
 - `docs/project.md`의 빌드 명령으로 컴파일 통과를 확인한다. 실패하면 원인을 고친다. 같은 방법으로 두 번 실패하면 보고한다. 테스트 실패는 Codex 단계에서 다룬다.
 - `HANDOFF.md`에 변경 파일, 실행한 명령과 결과를 적고 다음 행동을 `Codex doc-code-verify`(수정 반영이면 요청한 검증 단계)로 갱신한다.
 - 구현 결과를 "검증 완료", "PRD와 일치"로 보고하지 않는다. 검증은 Codex가 한다.
-- 사용자에게 같은 worktree에서 Codex 세션을 열어 "HANDOFF 읽고 이어서 진행해"라고 하도록 안내한다. 테스트·검증 전에 커밋하려면 `itd-commit`을 쓴다(미검증 경고 후 사용자 판단).
+- 사용자에게 같은 폴더의 Codex 세션(이미 열려 있으면 그 세션)에서 "HANDOFF 읽고 이어서 진행해"라고 하도록 안내한다. 테스트·검증 전에 커밋하려면 `itd-commit`을 쓴다(미검증 경고 후 사용자 판단).

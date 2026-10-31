@@ -1,8 +1,8 @@
 #!/bin/sh
-# PreToolUse(Edit|Write) 훅: 역할 분리, 작업 worktree, 계획 승인 게이트를 파일 편집에서 강제
+# PreToolUse(Edit|Write) 훅: 역할 분리, 작업 브랜치, 계획 승인 게이트를 파일 편집에서 강제
 # 사용법: edit-guard.sh claude|codex (stdin: 도구 입력 JSON)
 #   공통: .harness/state/(승인 기록) 편집 차단
-#   공통: 요구사항·PRD·API 문서·feature 산출물·소스·테스트는 작업 브랜치(feat|fix/ITD-####)에서만 편집. 원본 폴더(통합 브랜치)에서 차단
+#   공통: 요구사항·PRD·API 문서·feature 산출물·소스·테스트는 작업 브랜치(feat|fix/ITD-####)에서만 편집. 통합 브랜치에서 차단
 #   공통: 소스·빌드 파일·테스트는 계획 승인 기록이 있을 때만 편집
 #   claude: 기획·문서·계획·구현 담당. 테스트 코드 편집 차단 (테스트는 Codex)
 #   codex: 테스트·검증 담당. 요구사항·PRD·API 문서·PLAN.md·소스·빌드 파일 편집 차단
@@ -43,7 +43,7 @@ fi
 [ "$kind" = other ] && exit 0
 
 branch=$(current_branch)
-is_work_branch "$branch" || deny "작업 브랜치(feat|fix/ITD-####)가 아님($branch). 원본 폴더는 통합 브랜치로 두고, work-start로 만든 worktree 폴더에서 세션을 열어 작업 (docs/rules/git.md)"
+is_work_branch "$branch" || deny "작업 브랜치(feat|fix/ITD-####)가 아님($branch). Claude work-start로 작업 브랜치를 만들어 전환한 뒤 작업 (docs/rules/git.md)"
 
 case "$kind" in
   code|test)

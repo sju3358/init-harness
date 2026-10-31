@@ -28,7 +28,7 @@ description: 하네스를 clone한 새 프로젝트의 초기 셋팅을 한다. 
 
 - `docs/project.md`의 스택 표, 검증 명령(빌드 도구에 맞춰: Gradle이면 `./gradlew build`, `./gradlew test` 등), 통합 브랜치를 채운다.
 - 검증 명령은 사용자에게 보여주고 맞는지 확인받는다.
-- `docs/prd/01-skillset.md`는 원본 폴더에서 고치지 않는다(PRD 문서는 작업 worktree에서만 편집). 첫 티켓의 `prd-write`가 `project.md` 스택을 옮겨 채운다.
+- `docs/prd/01-skillset.md`는 통합 브랜치에서 고치지 않는다(PRD 문서는 작업 브랜치에서만 편집). 첫 티켓의 `prd-write`가 `project.md` 스택을 옮겨 채운다.
 
 ## 4. Git 훅
 
@@ -40,11 +40,11 @@ chmod +x .githooks/* .harness/hooks/*.sh scripts/*.sh
 ## 5. 보고와 다음 단계
 
 - 채운 값, 비워 둔 값, 등록한 훅을 보고한다.
-- 초기 커밋과 push는 보호 브랜치(`main`) 작업이라 사용자가 직접 한다고 안내한다. 이 폴더(원본 폴더)는 이후에도 `main`으로 둔다.
+- 초기 커밋과 push는 보호 브랜치(`main`) 작업이라 사용자가 직접 한다고 안내한다.
 
 ```bash
 git add -A && git commit -m "chore: 프로젝트 초기 셋팅"
 git push -u origin main --no-verify
 ```
 
-- 다음 단계: 첫 티켓의 `work-start`(원본 폴더에서 worktree 생성) → 그 worktree 세션에서 `req-gather`.
+- 다음 단계: 첫 티켓의 `work-start`(작업 브랜치로 전환) → 같은 세션에서 `req-gather`.

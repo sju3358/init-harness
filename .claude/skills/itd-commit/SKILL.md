@@ -5,11 +5,11 @@ description: ITD 티켓 커밋 컨벤션({종류}/ITD-#### 제목 + bullet 본�
 
 # ITD 커밋
 
-규칙 원문은 `docs/rules/git.md`다. 커밋·push는 Claude가 작업 worktree 세션에서 한다. worktree의 Git 메타데이터가 원본 폴더 `.git/`에 있어 Codex 샌드박스에서는 쓰기가 막히기 때문이다.
+규칙 원문은 `docs/rules/git.md`다. 커밋·push는 Claude가 한다. 미검증 경고·ITD 메시지·승인 확인을 이 스킬 한 곳에서 처리하기 위함이다.
 
 ## 1. 확인
 
-- 현재 브랜치가 `feat|fix/ITD-####`(작업 worktree)인지 확인한다. 보호 브랜치(원본 폴더)면 멈춘다.
+- 현재 브랜치가 `feat|fix/ITD-####`인지 확인한다. 보호 브랜치면 멈춘다.
 - `git status`로 커밋 대상을 확인한다. 이번 feature와 무관한 변경, 비밀값(.env, 키 파일)이 있으면 제외하고 알린다.
 
 ## 1-1. 미검증 경고 (구현이 포함된 커밋이면 반드시 1회)
@@ -22,7 +22,9 @@ description: ITD 티켓 커밋 컨벤션({종류}/ITD-#### 제목 + bullet 본�
 | --- | --- |
 | 문서-코드 검증 | `VERIFY.md`에 회차가 있고 결론에 `수정 필요`가 남지 않음 |
 | API 검증 | `API-VERIFY.md`에 회차가 있고 불일치가 남지 않음 (이 feature에 API가 없으면 해당 없음) |
-| 테스트 | `TEST-REPORT.md` "실행"에 실제 결과가 있고 실패 0건, 유효성 판정에 `약함`·`무효` 없음 |
+| 테스트 | `test-status.md`의 모든 TC가 `PASS`(실제 실행 기록 있음), `TEST-REPORT.md` 유효성 판정에 `약함`·`무효` 없음 |
+| 전체 회귀 | `test-status.md` "마지막 전체 회귀"가 실패 0건이고, 그 실행 커밋 이후 소스·테스트가 바뀌지 않음. 미충족이면 feature는 완료가 아니므로 커밋 본문 `- 미검증: 전체 회귀`로 남기고, `00-overview.md` feature 상태를 `구현 완료`로 바꾸지 않음 |
+| 명세 누락 | `TEST-REPORT.md` "명세 누락"의 항목이 `HANDOFF.md` "PRD 변경 요청"에서 처리됨 |
 | 수정 요청 | `HANDOFF.md` "구현 수정 요청"·"PRD 변경 요청"에 `대기` 없음 |
 | 최신성 | 각 검증 이후 소스가 다시 바뀌지 않음(`git log`·`git diff`로 검증 시점 이후 변경 확인) |
 
@@ -63,4 +65,4 @@ EOF
 
 ## 4. 보고
 
-커밋 해시, 제목, push 여부와 원격 브랜치를 보고한다. `HANDOFF.md` 상태를 갱신한다. PR·병합과 병합 후 worktree 정리는 사용자가 직접 한다고 덧붙인다.
+커밋 해시, 제목, push 여부와 원격 브랜치를 보고한다. `HANDOFF.md` 상태를 갱신한다. PR·병합과 병합 후 브랜치 정리는 사용자가 직접 한다고 덧붙인다.
