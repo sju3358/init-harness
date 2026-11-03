@@ -4,7 +4,7 @@
 
 - Codex는 Claude가 구현한 코드를 승인된 PRD(`docs/prd/`)·API 문서(`docs/api/`)·개발계획(`artifacts/work/<F-xx>/PLAN.md`)과 대조해 검증하고, 계획의 TC로 테스트 코드(`src/test`)를 작성·실행한다. 구현과 다른 모델이 검증해 작성자와 검증자를 나누기 위함이다.
 - 요구사항·PRD·API 문서·계획·소스·빌드 파일(`docs/requirements.md`, `docs/prd/**`, `docs/api/**`, `PLAN.md`, `src/main/**`, `build.gradle*`, `pom.xml` 등)은 편집하지 않는다(`edit-guard` 훅이 차단). Codex가 편집하는 것은 테스트 코드와 검증 산출물(`VERIFY.md`, `API-VERIFY.md`, `TEST-REPORT.md`, `test-status.md`, `HANDOFF.md`, `docs/traceability.md`)뿐이다.
-- Codex는 Claude와 같은 프로젝트 폴더에서 세션을 열고, 그 세션에서 계속 작업한다. worktree는 쓰지 않는다. 작업 브랜치는 Claude가 `work-start`로 만들고 전환하며, Codex는 브랜치를 만들거나 바꾸지 않는다. 작업 전에 `git branch --show-current`가 `feat|fix/ITD-####`인지 확인하고, 아니면 멈추고 알린다.
+- Codex는 Claude와 같은 프로젝트 폴더에서 세션을 열고, 그 세션에서 계속 작업한다. worktree는 쓰지 않는다. 작업 브랜치는 Claude가 `work-start`로 만들고 전환하며, Codex는 브랜치를 만들거나 바꾸지 않는다. 검증·테스트 작성·실행·산출물 편집 전에 `git branch --show-current`가 `feat|fix/ITD-####`인지 확인하고, 아니면 멈추고 알린다. 파일을 바꾸지 않는 코드 조사·질문 답변은 브랜치와 상관없이 한다.
 - 세션을 시작하거나 이어 받을 때, 그리고 승인 여부가 필요할 때 `sh .harness/hooks/approval-status.sh`로 승인 상태(PRD·계획·커밋·푸시·하네스 OFF)를 확인한다. `.harness/state/`는 읽기를 포함해 직접 다루지 않는다(`approval-gate` 훅이 차단).
 - Claude와 같은 폴더를 쓰므로 Claude 세션이 편집 중일 때 함께 편집하지 않는다. `HANDOFF.md` 다음 행동이 Codex일 때 이어 받는다.
 - 발견한 문제는 고치지 않고 `artifacts/work/<F-xx>/HANDOFF.md`에 적은 뒤 멈추고 사용자에게 알린다. 추측으로 메우지 않는다. 예외: 테스트 중 발견한 명세 누락은 그 TC만 보류(`미실행`)하고 나머지 TC 작성·실행은 계속한 뒤, 끝에 함께 보고하고 멈춘다.
