@@ -47,14 +47,14 @@ const docEndpoints = () => {
       .forEach((line, i) => {
         const head = line.match(/^#{2,4}\s+(API-\d+)\s+([A-Z]+)\s+(\S+)/);
         if (head) {
-          current = { id: head[1], method: head[2], path: head[3], key: `${head[2]} ${normalize(head[3])}`, file: `${file}:${i + 1}`, feature: null, status: null };
+          current = { id: head[1], method: head[2], path: head[3], key: `${head[2]} ${normalize(head[3])}`, file: `${file}:${i + 1}`, features: [], status: null };
           result.push(current);
           return;
         }
         if (/^#{1,4}\s/.test(line)) current = null;
         if (!current) return;
-        const f = line.match(/^- feature:\s*(F-\d+)/);
-        if (f) current.feature = f[1];
+        // 한 엔드포인트를 여러 feature가 함께 쓰면 "- feature: F-02, F-08"처럼 모두 적음
+        if (/^- feature:/.test(line)) current.features = [...new Set(line.match(/F-\d+/g) ?? [])];
         const s = line.match(/^- API 상태:\s*(\S+)/);
         if (s) current.status = s[1];
       });
@@ -136,10 +136,10 @@ for (const d of docs) {
   if (ids.has(d.id)) report("ID 중복", `${d.id}: ${ids.get(d.id)}, ${d.file}`);
   ids.set(d.id, d.file);
   if (!METHODS.includes(d.method)) report("메서드 오류", `${d.id} ${d.method}: ${d.file}`);
-  if (!d.feature) report("feature 없음", `${d.id}: ${d.file}`);
+  if (!d.features.length) report("feature 없음", `${d.id}: ${d.file}`);
 }
 
-const targets = docs.filter((d) => !feature || d.feature === feature);
+const targets = docs.filter((d) => !feature || d.features.includes(feature));
 if (feature && !targets.length) report("문서 없음", `${feature}에 해당하는 엔드포인트가 docs/api/에 없음`);
 for (const d of targets) {
   if (d.status === "폐기") {

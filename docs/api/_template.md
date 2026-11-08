@@ -9,7 +9,7 @@
 ### API-### GET /api/v1/{resources}/{id}
 
 - 요구사항: REQ-###
-- feature: F-##
+- feature: F-## (여러 feature가 함께 쓰면 `F-02, F-08`처럼 모두 적음)
 - API 상태: 확정
 - 인증: 필요 (권한) / 불필요
 

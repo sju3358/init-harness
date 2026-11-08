@@ -32,7 +32,7 @@ prd_files() {
   find docs/prd docs/api -name '*.md' ! -name '_template.md' 2>/dev/null | LC_ALL=C sort
 }
 
-# docs/api 엔드포인트 색인: "API-ID|feature|REQ 인용 여부(1/0)" 한 줄씩
+# docs/api 엔드포인트 색인: "API-ID|feature(여러 개면 쉼표 구분)|REQ 인용 여부(1/0)" 한 줄씩
 api_index() {
   for file in docs/api/*.md; do
     [ -f "$file" ] || continue
@@ -41,7 +41,7 @@ api_index() {
       function flush() { if (id != "") print id "|" feat "|" req }
       /^#{2,4}[ \t]+API-[0-9]+[ \t]/ { flush(); id = $2; feat = ""; req = 0; next }
       /^#{1,4}[ \t]/ { flush(); id = ""; next }
-      id != "" && /^- feature:/ { if (match($0, /F-[0-9]+/)) feat = substr($0, RSTART, RLENGTH) }
+      id != "" && /^- feature:/ { s = $0; while (match(s, /F-[0-9]+/)) { f = substr(s, RSTART, RLENGTH); if (index("," feat ",", "," f ",") == 0) feat = (feat == "" ? f : feat "," f); s = substr(s, RSTART + RLENGTH) } }
       id != "" && /^- 요구사항:/ && /REQ-[0-9]+/ { req = 1 }
       END { flush() }' "$file"
   done
@@ -89,13 +89,14 @@ check_prd() {
     rest=${line#*|}
     feat=${rest%%|*}
     req=${rest#*|}
-    if [ -z "$feat" ]; then
-      report "API feature 없음" "$id: '- feature:' 줄이 없음"
-    elif ! contains "$features" "$feat"; then
-      report "API feature 오류" "$id: ${feat}가 feature 목록에 없음"
-    elif ! grep -q "$id" "docs/prd/features/$feat.md" 2>/dev/null; then
-      report "명세 미연결" "$id: docs/prd/features/$feat.md API 표에 없음"
-    fi
+    [ -n "$feat" ] || report "API feature 없음" "$id: '- feature:' 줄이 없음"
+    for ft in $(printf '%s\n' "$feat" | tr ',' ' '); do
+      if ! contains "$features" "$ft"; then
+        report "API feature 오류" "$id: ${ft}가 feature 목록에 없음"
+      elif ! grep -q "$id" "docs/prd/features/$ft.md" 2>/dev/null; then
+        report "명세 미연결" "$id: docs/prd/features/$ft.md API 표에 없음"
+      fi
+    done
     [ "$req" = 1 ] || report "API 근거 없음" "$id: '- 요구사항:' REQ 인용이 없음"
   done
   # shellcheck disable=SC2046
@@ -137,7 +138,7 @@ check_feature() {
   for line in $(api_index); do
     id=${line%%|*}
     rest=${line#*|}
-    [ "${rest%%|*}" = "$f" ] || continue
+    case ",${rest%%|*}," in *",$f,"*) ;; *) continue ;; esac
     grep -q "$id" "$plan" || report "계획 미반영" "$id: docs/api/의 $f API인데 PLAN.md에 없음"
   done
   [ -n "$plan_tcs" ] || report "TC 없음" "PLAN.md 테스트 케이스 표가 비어 있음"
