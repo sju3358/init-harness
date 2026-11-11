@@ -72,6 +72,13 @@ else
   echo "- 커밋·푸시 승인: 없음"
 fi
 
+f="$state/claude-tester"
+if [ -f "$f" ]; then
+  echo "- 테스트·검증 담당: Claude 테스터 세션 (session $(tr -d '\r\n' < "$f" | cut -c1-8)…). 해제는 'Claude 테스터 해제'"
+else
+  echo "- 테스트·검증 담당: Codex (기본·권장)"
+fi
+
 f="$state/adopt-approved"
 left=""
 [ -f "$f" ] && left=$(remaining "$f")

@@ -29,9 +29,14 @@
 | 구현 시작·계속, Codex의 구현 수정 요청 반영 | `implement` |
 | Codex의 PRD 변경 요청 반영 | `prd-change` |
 | 커밋 (테스트·검증 미완료면 경고 1회 후 사용자 판단) | `itd-commit` |
+| (Claude 테스터 세션만) 문서-코드·API 검증, 테스트 작성·검증 | `doc-code-verify`, `api-verify`, `test-write`, `test-verify` |
 
 - 사용자 확인은 `AskUserQuestion`, 멀티스텝 작업은 할 일 목록에 먼저 등록한다.
 - 검증은 작성한 세션이 아니라 `prd-verifier` 에이전트(새 컨텍스트)가 한다. 작성자가 자기 결과를 "검증 완료"로 보고하지 않는다.
+
+## Claude 테스터 세션 (선택, 권장은 Codex)
+
+사용자가 새 Claude 세션의 첫 입력으로 `Claude 테스터`를 넣으면 그 세션은 이 문서의 역할이 아니라 `AGENTS.md`의 Codex 역할(테스트 작성·검증)을 그대로 따른다. 판정은 `verifier` 대신 `code-verifier`, 나머지 차이는 `docs/rules/workflow.md` "Claude 테스터 세션". 훅이 그 세션에 Codex와 같은 편집·git 제한을 건다. 다른 Claude 세션은 그대로 구현 담당이다. 테스트·검증 담당을 정해야 할 때는 Codex를 권장안으로 먼저 제시한다.
 
 ## Codex 대행
 

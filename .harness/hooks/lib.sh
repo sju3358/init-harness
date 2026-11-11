@@ -126,6 +126,12 @@ adopt_approved() {
   [ -f "$f" ] && [ -n "$(find "$f" -mmin -30 2>/dev/null)" ] && [ "$(cat "$f")" = "$1" ]
 }
 
+# 훅 입력 JSON의 session_id가 `Claude 테스터`로 지정된 세션인지 (docs/rules/workflow.md "Claude 테스터 세션")
+is_tester_session() {
+  f="$(state_dir)/claude-tester"
+  [ -n "$1" ] && [ -f "$f" ] && [ "$(tr -d '\r\n' < "$f")" = "$1" ]
+}
+
 deny() {
   echo "차단: $1" >&2
   exit 2

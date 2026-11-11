@@ -41,3 +41,7 @@ Codex를 쓸 수 없어 사용자가 Claude에게 대행을 요청한 경우(`do
 - `verifier` 대신 `code-verifier` 에이전트를 `mode=api`로 실행한다. 메인 세션 재검증은 그대로 한다.
 - 빌드·테스트·검사 스크립트는 실행해도 된다. 검증 중에는 소스·`PLAN.md`를 고치지 않고, 테스트는 고칠 수 없다(훅이 차단).
 - `수정 필요`가 나와도 테스트는 고치지 않는다. `API-VERIFY.md`에 판정을 남기고, 소스 결함은 "구현 수정 요청"(Claude `implement`로 처리), 테스트 결함은 "대행 기록"의 "원래 담당이 할 일"에 적은 뒤 멈춘다.
+
+## Claude 테스터 세션
+
+`Claude 테스터`로 지정된 Claude 세션(`docs/rules/workflow.md` "Claude 테스터 세션")은 이 절차를 Codex와 똑같이 따른다. `verifier` 대신 `code-verifier` 에이전트를 `mode=api`로 실행하고 회차 제목에 `(Claude 테스터)`를 붙이게 한다. 위 "Claude 대행"의 제약(테스트 수정 금지 등)은 적용하지 않는다.

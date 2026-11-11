@@ -2,7 +2,7 @@
 
 ## 상태
 
-- 담당: Claude / Codex
+- 담당: Claude / Codex / Claude 테스터
 - 현재 단계: (workflow.md 단계 ID, 예: C5 구현)
 - 상태: 진행 / 차단 / 완료
 - 차단 사유:

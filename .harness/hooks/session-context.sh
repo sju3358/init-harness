@@ -6,6 +6,14 @@
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
+input=""
+[ -t 0 ] || input=$(cat)
+sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+if is_tester_session "$sid"; then
+  echo "하네스: 이 세션은 Claude 테스터 세션이다(Codex 역할 대체). CLAUDE.md의 구현 역할이 아니라 AGENTS.md와 docs/rules/workflow.md 'Claude 테스터 세션'을 따른다. 판정은 code-verifier 에이전트."
+  echo
+fi
+
 branch=$(current_branch)
 is_work_branch "$branch" || exit 0
 root=$(repo_root)

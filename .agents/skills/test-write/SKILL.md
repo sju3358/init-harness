@@ -35,3 +35,7 @@ description: 개발계획(PLAN.md)의 테스트 케이스(TC)를 테스트 코�
 - `artifacts/work/F-##/test-status.md`(없으면 `_template/`에서 복사)에 TC마다 행을 만들고 테스트 위치·관련 소스를 적는다. 새로 쓴 테스트의 상태는 `미실행`이다.
 - `sh scripts/check-trace.sh feature F-##`가 `문제 없음`이어야 한다.
 - `HANDOFF.md` 다음 행동을 `test-verify`로 갱신한다. 테스트 실행은 다음 단계에서 한다.
+
+## Claude 테스터 세션
+
+`Claude 테스터`로 지정된 Claude 세션(`docs/rules/workflow.md` "Claude 테스터 세션")은 이 절차를 Codex와 똑같이 따른다. 파일은 Edit·Write로만 쓴다.

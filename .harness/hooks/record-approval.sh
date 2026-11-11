@@ -4,6 +4,7 @@
 # 문장 속 언급("계획 승인 전에 뭐 해?")은 오탐이라 줄 전체가 문구일 때만 인정
 #
 # 문구: PRD 승인 · 계획 승인 · 커밋 승인 · 푸시 승인 · 커밋 푸시 승인 · 하네스 도입 승인 · 하네스 업데이트 승인 · 승인 취소 · 하네스 OFF · 하네스 ON
+#       Claude 테스터 · Claude 테스터 해제 (Claude 세션만. 승인이 아니라 테스트·검증 담당 세션 지정)
 
 dir=$(dirname "$0")
 . "$dir/lib.sh"
@@ -14,7 +15,8 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 0
 fi
 
-prompt=$(sh "$dir/user-prompt-text.sh")
+input=$(cat)
+prompt=$(printf '%s' "$input" | sh "$dir/user-prompt-text.sh")
 [ -n "$prompt" ] || exit 0
 
 lines=$(printf '%s\n' "$prompt" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*[.!]*[[:space:]]*$//')
@@ -48,6 +50,26 @@ if has '하네스 도입 승인|하네스 업데이트 승인'; then
     echo "승인 기록: 하네스 도입·업데이트 승인 ($branch, 30분 유효). .harness/paths 안의 파일만 커밋하고 ${branch}에 push 가능. git add와 git commit은 따로 실행할 것."
   else
     echo "하네스 도입·업데이트 승인 기록 실패: 현재 브랜치($branch)가 보호 브랜치가 아님. 작업 브랜치에서는 일반 '커밋 승인'·'푸시 승인'을 사용."
+  fi
+fi
+
+# Claude 테스터 세션: Codex 대신 테스트·검증을 맡을 Claude 세션을 session_id로 지정 (docs/rules/workflow.md "Claude 테스터 세션")
+# 구현 맥락이 섞이지 않도록 이전 대화가 없는 새 세션의 첫 입력일 때만 지정
+if [ "${1:-}" = codex ]; then
+  has 'Claude 테스터( 해제)?' && echo "'Claude 테스터'는 Claude 세션에서 입력하는 문구라 Codex 세션에서는 기록하지 않음. 사용자에게 알릴 것."
+elif has 'Claude 테스터 해제'; then
+  rm -f "$state/claude-tester"
+  echo "기록: Claude 테스터 세션 해제. 테스트·검증은 Codex(권장)가 맡음. 지정됐던 세션도 일반 Claude 역할(CLAUDE.md)로 돌아감."
+elif has 'Claude 테스터'; then
+  sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+  tp=$(printf '%s' "$input" | jq -r '.transcript_path // empty' 2>/dev/null)
+  if [ -z "$sid" ]; then
+    echo "Claude 테스터 지정 실패: 훅 입력에 session_id가 없음(Claude Code 세션에서만 지정 가능). 사용자에게 알릴 것."
+  elif [ -n "$tp" ] && [ -f "$tp" ] && grep -qE '"type": ?"assistant"' "$tp"; then
+    echo "Claude 테스터 지정 거부: 이 세션에 이전 대화가 있음(구현 맥락이 섞임). 사용자에게 새 Claude 세션(새 창 또는 /clear 뒤)의 첫 입력으로 'Claude 테스터'를 입력하도록 안내할 것."
+  else
+    printf '%s\n' "$sid" > "$state/claude-tester"
+    echo "기록: 이 세션을 Claude 테스터 세션으로 지정(Codex 역할 대체, 이전 지정 세션은 해제). 이 세션은 CLAUDE.md의 구현 역할이 아니라 AGENTS.md의 Codex 역할을 그대로 따른다: AGENTS.md와 docs/rules/workflow.md 'Claude 테스터 세션'을 먼저 읽고, sh .harness/hooks/approval-status.sh로 승인 상태를, artifacts/work/F-*/HANDOFF.md로 다음 행동을 확인한 뒤 doc-code-verify → api-verify → test-write → test-verify를 진행. 판정은 verifier 대신 code-verifier 에이전트. 요구사항·PRD·API 문서·PLAN.md·소스·빌드 파일 편집과 커밋·push·브랜치 전환은 훅이 차단. 해제는 'Claude 테스터 해제'."
   fi
 fi
 

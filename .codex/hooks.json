@@ -5,7 +5,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/record-approval.sh\""
+						"command": "sh \"$(git rev-parse --show-toplevel)/.harness/hooks/record-approval.sh\" codex"
 					}
 				]
 			}

@@ -60,12 +60,26 @@ say() {
   jq -nc --arg p "$1" '{prompt:$p}' | sh "$H/record-approval.sh" >/dev/null 2>&1
 }
 
+# session_id를 넣은 Claude 훅 입력 (Claude 테스터 세션 검사용)
+edit_s() {
+  jq -nc --arg s "$1" --arg p "$2" '{tool_name:"Write",session_id:$s,tool_input:{file_path:$p}}' | sh "$H/edit-guard.sh" claude >/dev/null 2>&1
+  echo $?
+}
+bash_s() {
+  jq -nc --arg s "$1" --arg c "$2" '{tool_name:"Bash",session_id:$s,tool_input:{command:$c}}' | sh "$H/approval-gate.sh" >/dev/null 2>&1
+  echo $?
+}
+# 프롬프트, session_id, transcript 경로, [훅 인자]
+say_s() {
+  jq -nc --arg p "$1" --arg s "$2" --arg t "$3" '{prompt:$p,session_id:$s,transcript_path:$t}' | sh "$H/record-approval.sh" ${4:-} >/dev/null 2>&1
+}
+
 exists() {
   [ -f "$S/$1" ] && echo 있음 || echo 없음
 }
 
 reset_state() {
-  rm -f "$S"/prd-approved "$S"/plan-approved--* "$S"/git-approved "$S"/adopt-approved "$S"/harness-off
+  rm -f "$S"/prd-approved "$S"/plan-approved--* "$S"/git-approved "$S"/adopt-approved "$S"/harness-off "$S"/claude-tester
 }
 
 bak=$(mktemp -d)
@@ -123,6 +137,43 @@ check "계획 승인 후 Claude 빌드 파일 편집 허용" 0 "$(edit claude bu
 check "계획 승인 후 Codex 테스트 편집 허용" 0 "$(patch_codex src/test/java/demo/DemoTest.java)"
 check "계획 승인 후에도 Claude 테스트 편집 차단" 2 "$(edit claude src/test/java/demo/DemoTest.java)"
 check "계획 승인 후에도 Codex 소스 편집 차단" 2 "$(patch_codex src/main/java/demo/DemoApplication.java)"
+
+echo "== Claude 테스터 세션"
+fresh=$(mktemp)
+used=$(mktemp)
+printf '{"type":"user","message":{}}\n{"type":"assistant","message":{}}\n' > "$used"
+say_s "Claude 테스터" impl-1 "$used"
+check "이전 대화가 있는 세션은 테스터 지정 거부" 없음 "$(exists claude-tester)"
+say_s "Claude 테스터" codex-1 "$fresh" codex
+check "Codex 세션 입력은 테스터 지정 안 함" 없음 "$(exists claude-tester)"
+say_s "Claude 테스터 지정해도 돼?" tester-1 "$fresh"
+check "문장 속 'Claude 테스터'는 기록 안 됨" 없음 "$(exists claude-tester)"
+say_s "Claude 테스터" tester-1 "$fresh"
+check "새 세션 첫 입력 'Claude 테스터' 기록" 있음 "$(exists claude-tester)"
+check "테스터 세션 테스트 편집 허용" 0 "$(edit_s tester-1 src/test/java/demo/DemoTest.java)"
+check "테스터 세션 VERIFY.md 편집 허용" 0 "$(edit_s tester-1 artifacts/work/F-01/VERIFY.md)"
+check "테스터 세션 소스 편집 차단" 2 "$(edit_s tester-1 src/main/java/demo/DemoApplication.java)"
+check "테스터 세션 빌드 파일 편집 차단" 2 "$(edit_s tester-1 build.gradle)"
+check "테스터 세션 PRD 편집 차단" 2 "$(edit_s tester-1 docs/prd/00-overview.md)"
+check "테스터 세션 PLAN.md 편집 차단" 2 "$(edit_s tester-1 artifacts/work/F-01/PLAN.md)"
+check "다른 Claude 세션은 여전히 테스트 편집 차단" 2 "$(edit_s impl-1 src/test/java/demo/DemoTest.java)"
+check "다른 Claude 세션은 소스 편집 허용" 0 "$(edit_s impl-1 src/main/java/demo/DemoApplication.java)"
+say "커밋 푸시 승인"
+check "테스터 세션 git commit 차단(커밋 승인 있어도)" 2 "$(bash_s tester-1 'git commit -m x')"
+check "테스터 세션 git push 차단" 2 "$(bash_s tester-1 'git push')"
+check "테스터 세션 git switch 차단" 2 "$(bash_s tester-1 'git switch main')"
+check "테스터 세션 git status 허용" 0 "$(bash_s tester-1 'git status')"
+check "다른 Claude 세션 git commit 허용(커밋 승인 있음)" 0 "$(bash_s impl-1 'git commit -m x')"
+case "$(sh "$H/approval-status.sh")" in *"테스트·검증 담당: Claude 테스터 세션"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: 테스터 세션 표시" 0 $r
+case "$(jq -nc '{session_id:"tester-1"}' | sh "$H/session-context.sh" 2>/dev/null)" in *"Claude 테스터 세션이다"*) r=0 ;; *) r=1 ;; esac
+check "session-context: 테스터 세션에 역할 안내" 0 $r
+say_s "Claude 테스터 해제" tester-1 "$fresh"
+check "'Claude 테스터 해제'로 기록 삭제" 없음 "$(exists claude-tester)"
+check "해제 후 그 세션 테스트 편집 차단" 2 "$(edit_s tester-1 src/test/java/demo/DemoTest.java)"
+case "$(sh "$H/approval-status.sh")" in *"테스트·검증 담당: Codex (기본·권장)"*) r=0 ;; *) r=1 ;; esac
+check "approval-status: 해제 후 Codex 표시" 0 $r
+rm -f "$fresh" "$used" "$S/git-approved"
 
 check "커밋 승인 전 git commit 차단" 2 "$(bash_hook approval-gate 'git commit -m x')"
 check "푸시 승인 전 git push 차단" 2 "$(bash_hook approval-gate 'git push')"

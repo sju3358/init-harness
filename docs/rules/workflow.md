@@ -47,7 +47,7 @@
 | ✋ 커밋·푸시 승인 | Claude | `itd-commit` | 커밋, 작업 브랜치 push | 테스트·검증 미완료면 경고 1회 후 사용자 판단. 사용자가 `커밋 승인`·`푸시 승인` 입력 |
 
 - 구현은 Claude만 한다. 한 티켓의 코드를 한 모델이 써서 스타일을 일관되게 유지하기 위함이다. Codex의 소스·빌드 파일 편집은 `edit-guard` 훅이 차단한다.
-- 테스트 작성과 검증은 Codex가 한다. 구현과 다른 모델이 보게 해서 작성자와 검증자를 나눈다. Claude의 테스트 코드(`src/test`) 편집은 훅이 차단한다.
+- 테스트 작성과 검증은 Codex가 한다. 구현과 다른 모델이 보게 해서 작성자와 검증자를 나눈다. Claude의 테스트 코드(`src/test`) 편집은 훅이 차단한다. 선택적으로 `Claude 테스터`로 지정한 별도 Claude 세션이 Codex 역할을 그대로 맡을 수 있다(아래 "Claude 테스터 세션", 권장은 Codex).
 - 테스트 기대값은 문서(요구사항·PRD·API·`PLAN.md`)에서만 가져온다. 구현 코드는 인터페이스·실행 방법 확인용이고, 문서와 다르면 버그, 문서가 침묵하면 명세 누락으로 기록한다.
 - 테스트는 첫 실패에서 멈춘다. 구현 결함이면 Codex가 버그 리포트(`HANDOFF.md` "구현 수정 요청")를 쓰고 멈추고, Claude `implement`가 고친 뒤 Codex가 다시 검증한다. Codex는 구현 코드를 고치지 않는다.
 - 중간 재실행은 `test-status.md` 기준으로 `FAIL`·`미실행`과 수정 파일에 관련된 `PASS` TC만 한다. 최종 완료 판정은 전체 회귀(전체 테스트) 통과가 필수다. Codex는 모든 TC가 `PASS`가 되면 전체 회귀를 실행하고, 실패 0건이며 그 뒤 소스·테스트 변경이 없을 때만 `HANDOFF.md` 상태를 `완료`로 쓴다. 충족하지 않은 채 커밋하면 `itd-commit`이 경고하고 `- 미검증: 전체 회귀`를 남긴다.
@@ -75,6 +75,7 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 | 하네스 도입 (예외) | `하네스 도입 승인` | `.harness/state/adopt-approved`(30분, 승인 브랜치 한정, push 1회 후 삭제) | 보호 브랜치 커밋·push. 하네스 파일만 허용 |
 | 취소 | `승인 취소` | 현재 브랜치 계획 승인·git 승인·도입 승인 삭제 | - |
 | 하네스 끄기·켜기 | `하네스 OFF` / `하네스 ON` | `.harness/state/harness-off` (`하네스 ON`까지 유지) | OFF 중에는 위 게이트와 훅 차단 전부 해제 |
+| Claude 테스터 지정 (승인 아님) | `Claude 테스터` / `Claude 테스터 해제` | `.harness/state/claude-tester` (지정 세션 ID) | 그 세션에 Codex 역할 제한 적용(아래 "Claude 테스터 세션") |
 
 - 기록은 `.harness/hooks/record-approval.sh`(UserPromptSubmit)가 사용자 문장에서만 만든다. 에이전트는 `.harness/state/`를 읽기를 포함해 직접 다루지 않는다(`approval-gate` 훅이 차단).
 - 승인 상태는 `sh .harness/hooks/approval-status.sh`로 확인한다. Claude는 작업 브랜치 세션이 시작·재개·압축될 때 `SessionStart` 훅이 이 요약을 자동으로 넣고, Codex는 세션 시작 때 직접 실행한다.
@@ -107,6 +108,18 @@ PR 생성과 병합은 사람이 직접 한다. 에이전트는 PR을 만들지 
 - 상대가 하던 구현·문서·테스트 작성을 이어서 하는 것. 원래 담당의 한도가 돌아오면 그쪽에서 이어 간다.
 
 대행한 작업은 `HANDOFF.md` "대행 기록"에 남긴다. 대행 검증에서 `수정 필요`가 나오면 대행자는 고치지 않고, 원래 담당이 다음 세션에서 `HANDOFF.md`를 읽고 처리한다.
+
+## Claude 테스터 세션 (선택)
+
+테스트·검증 담당은 **Codex가 기본이고 권장**이다. 구현과 다른 모델이 검증해야 작성자와 검증자가 모델 수준에서 나뉘기 때문이다. Codex를 쓸 수 없거나 사용자가 원하면 별도 Claude 세션이 Codex 역할을 **그대로** 맡을 수 있다. 같은 모델이라 분리는 컨텍스트(세션) 수준까지만이다.
+
+- 지정: 새 Claude 세션(새 창 또는 `/clear` 뒤)의 첫 입력으로 `Claude 테스터`를 단독 입력한다. 이전 대화가 있는 세션은 구현 맥락이 섞이므로 훅이 거부한다. 한 번에 한 세션만 지정되고, 다시 지정하면 이전 세션은 풀린다. 해제는 `Claude 테스터 해제`. Codex 세션에서 입력한 문구는 기록하지 않는다.
+- 기록: `record-approval.sh`가 그 세션의 `session_id`를 `.harness/state/claude-tester`에 남긴다(승인 기록과 같이 사용자 문장으로만 생김). 세션 ID가 바뀌면(새 창, `/clear`, 재개 후 ID 변경) 다시 지정한다. 지정 상태는 `approval-status.sh`의 "테스트·검증 담당"에 나온다.
+- 역할: `AGENTS.md`와 `.agents/skills/`의 Codex 절차를 그대로 따른다(`doc-code-verify` → `api-verify` → `test-write` → `test-verify`, 멈추는 조건, `HANDOFF.md` 요청 작성 포함). 훅이 그 세션에 Codex와 같은 제한을 건다: 테스트 코드·검증 산출물만 편집, 요구사항·PRD·API 문서·`PLAN.md`·소스·빌드 파일 편집 차단, `git commit`·`push`·`merge`·`rebase`·`switch`·브랜치 전환 차단.
+- 도구 차이만 바꾼다: `verifier` 대신 `code-verifier` 에이전트(Agent 도구, 새 컨텍스트)를 같은 mode로 실행하고, Codex 전용 지시(`fork_turns`, `wait_agent`, `apply_patch`)는 Claude 도구(Agent, Edit·Write)로 대신한다. 셸 쓰기로 파일을 바꾸지 않는 규칙은 같다. 검증 산출물 회차 제목에 `(Claude 테스터)`를 붙이고, `HANDOFF.md` 담당은 `Claude 테스터`로 쓴다.
+- `HANDOFF.md` 다음 행동의 `Codex <스킬>`은 테스트·검증 담당을 뜻한다. 테스터 세션이 지정돼 있으면 그 세션이 이어 받는다.
+- 다른 Claude 세션(구현 세션)은 그대로 `CLAUDE.md` 역할이다. 테스트 코드 편집은 계속 막히고, 수정 요청 반영·커밋·push는 구현 세션이 한다. Codex와 마찬가지로 두 세션이 동시에 편집하지 않는다.
+- "대행 작업"과 다르다. 대행은 검증 판정·실행만 대신하고 테스트 코드를 쓰지 않는다. 테스터 세션은 테스트 작성을 포함한 Codex 역할 전체를 맡는다.
 
 ## 예외: 진행 중 프로젝트에 하네스 도입
 

@@ -6,14 +6,22 @@
 #   공통: 소스·빌드 파일·테스트는 계획 승인 기록이 있을 때만 편집
 #   claude: 기획·문서·계획·구현 담당. 테스트 코드 편집 차단 (테스트는 Codex)
 #   codex: 테스트·검증 담당. 요구사항·PRD·API 문서·PLAN.md·소스·빌드 파일 편집 차단
+#   claude여도 `Claude 테스터`로 지정된 세션(session_id 일치)이면 codex 규칙 적용
 
 dir=$(dirname "$0")
 . "$dir/lib.sh"
 
 agent=$1
 require_jq
-path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null | tr -d '\r')
+input=$(cat)
+path=$(printf '%s' "$input" | jq -r '.tool_input.file_path // .tool_input.notebook_path // empty' 2>/dev/null | tr -d '\r')
 [ -n "$path" ] || exit 0
+
+who=Codex
+if [ "$agent" = claude ] && is_tester_session "$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)"; then
+  agent=codex
+  who="Claude 테스터 세션"
+fi
 
 rel=$(rel_path "$path")
 [ -n "$rel" ] || exit 0
@@ -33,11 +41,11 @@ case "$rel" in
 esac
 
 if [ "$agent" = claude ]; then
-  [ "$kind" = test ] && deny "테스트 코드($rel)는 Codex가 작성. 빌드를 위해 기존 테스트를 고쳐야 하면 HANDOFF.md 다음 행동에 적어 Codex에 넘길 것 (CLAUDE.md)"
+  [ "$kind" = test ] && deny "테스트 코드($rel)는 테스트·검증 담당(Codex, 또는 'Claude 테스터'로 지정한 별도 Claude 세션)이 작성. 빌드를 위해 기존 테스트를 고쳐야 하면 HANDOFF.md 다음 행동에 적어 넘길 것 (CLAUDE.md)"
 else
-  [ "$kind" = prd ] && deny "Codex는 요구사항·PRD·API 문서($rel)를 편집하지 않음. artifacts/work/<F-##>/HANDOFF.md의 'PRD 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
-  [ "$kind" = plan ] && deny "PLAN.md는 Claude가 작성. 계획을 바꿔야 하면 HANDOFF.md의 '계획 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
-  [ "$kind" = code ] && deny "Codex는 소스·빌드 파일($rel)을 편집하지 않음(구현은 Claude). 결함은 HANDOFF.md의 '구현 수정 요청'에 기록하고 멈출 것 (AGENTS.md)"
+  [ "$kind" = prd ] && deny "테스트·검증 담당($who)은 요구사항·PRD·API 문서($rel)를 편집하지 않음. artifacts/work/<F-##>/HANDOFF.md의 'PRD 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
+  [ "$kind" = plan ] && deny "PLAN.md는 Claude 구현 세션이 작성. 테스트·검증 담당($who)은 계획을 바꿔야 하면 HANDOFF.md의 '계획 변경 요청'에 기록하고 멈출 것 (AGENTS.md)"
+  [ "$kind" = code ] && deny "테스트·검증 담당($who)은 소스·빌드 파일($rel)을 편집하지 않음(구현은 Claude 구현 세션). 결함은 HANDOFF.md의 '구현 수정 요청'에 기록하고 멈출 것 (AGENTS.md)"
 fi
 
 [ "$kind" = other ] && exit 0
