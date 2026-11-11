@@ -1,10 +1,10 @@
 # init-harness
 
-SI 프로젝트(보통 4~5일 단위)용 **Claude·Codex 분업 하네스**입니다. Claude는 기획·문서·개발계획·구현을 맡고, Codex는 테스트와 검증을 맡습니다. 모든 결과물은 요구사항 ID로 이어져 검증됩니다.
+SI 프로젝트(보통 4~5일 단위)용 **Claude·Codex 분업 하네스**입니다. Claude는 기획·문서·개발계획·구현을 맡고, Codex는 테스트와 검증을 맡습니다(선택: 별도 Claude 세션이 Codex 역할을 그대로 맡는 [Claude 테스터 세션](#9-1-claude-테스터-세션-선택), 권장은 Codex). 모든 결과물은 요구사항 ID로 이어져 검증됩니다.
 
 **핵심 원칙**
 
-- **역할 분리**: Claude는 문서·계획·소스를 고치고, Codex는 테스트 코드와 검증 산출물만 고칩니다. 한 티켓의 구현을 한 모델이 맡아 코드가 일관되고, 검증은 다른 모델이 합니다. 서로의 영역 편집은 훅이 막습니다.
+- **역할 분리**: Claude는 문서·계획·소스를 고치고, Codex는 테스트 코드와 검증 산출물만 고칩니다. 한 티켓의 구현을 한 모델이 맡아 코드가 일관되고, 검증은 다른 모델이 합니다. 서로의 영역 편집은 훅이 막습니다. Claude 테스터 세션도 Codex와 같은 제한을 받습니다.
 - **한 폴더, 한 세션**: worktree를 쓰지 않습니다. 프로젝트 폴더 하나에서 티켓마다 작업 브랜치로 전환하고, Claude·Codex 모두 열어 둔 세션에서 계속 작업합니다.
 - **끊겨도 이어 감**: 사용량 한도나 계정 전환으로 세션이 끊겨도 `HANDOFF.md`의 진행 위치와 작업 파일로 이어 갑니다. Claude 세션이 시작되면 훅이 인계 상태를 자동으로 보여줍니다.
 - **문서가 원본**: 요구사항, PRD, API 문서가 기준입니다. 코드는 문서를 따르고, 테스트 기대값도 문서에서만 가져옵니다. 문서를 바꿔야 하면 정해진 경로로 되돌아갑니다.
@@ -98,7 +98,7 @@ flowchart TD
             G2 --> C6[implement<br/>구현]
         end
 
-        subgraph X["Codex 세션 · 테스트/검증"]
+        subgraph X["Codex 세션(선택: Claude 테스터 세션) · 테스트/검증"]
             X1[doc-code-verify<br/>문서-코드 검증] --> X2[api-verify<br/>API 검증]
             X2 --> X3[test-write<br/>테스트 작성]
             X3 --> X4[test-verify<br/>테스트 검증]
@@ -150,6 +150,8 @@ flowchart TD
 ### 4-2. Codex: 테스트·검증 (같은 폴더, 같은 세션)
 
 Codex는 소스를 고치지 않습니다. 결함은 `HANDOFF.md`에 적어 Claude에 넘깁니다(소스 결함 → "구현 수정 요청", TC 문제 → "계획 변경 요청", 문서 문제·명세 누락 → "PRD 변경 요청"). 작업 전에 현재 브랜치가 `feat|fix/ITD-####`인지 확인합니다.
+
+Codex 대신 **Claude 테스터 세션**([9-1](#9-1-claude-테스터-세션-선택))이 이 절의 단계를 그대로 진행할 수도 있습니다(테스트 작성 포함). 이때 `verifier`는 `code-verifier`로 바뀌고, 이 문서에서 테스트·검증 담당으로 적힌 "Codex"는 그 세션을 뜻합니다. 권장은 Codex입니다.
 
 | 단계 | 이렇게 말하면 | 하는 일 | 산출물 | 다음으로 넘어가는 조건 |
 | --- | --- | --- | --- | --- |
@@ -223,20 +225,21 @@ Codex의 테스트 작성(`test-write`)·검증(`test-verify`) 규칙입니다. 
 | 입력 문구 | 열리는 것 | 유효 범위 | 막는 장치 |
 | --- | --- | --- | --- |
 | `PRD 승인` | 개발계획 작성 | 요구사항·PRD·API 문서 내용이 바뀌기 전까지(브랜치를 바꿔 문서가 달라져도 무효). 마지막 전체 검증 회차가 `승인 가능`이고 그 뒤 문서가 바뀌지 않았을 때만 기록 | `prd-check.sh` (해시 비교) |
-| `계획 승인` | 소스·빌드 파일 편집(Claude), 테스트 코드 편집(Codex) | 승인한 작업 브랜치 | `edit-guard.sh` |
+| `계획 승인` | 소스·빌드 파일 편집(Claude), 테스트 코드 편집(Codex·Claude 테스터 세션) | 승인한 작업 브랜치 | `edit-guard.sh` |
 | `커밋 승인` | `git commit` | 30분 | `approval-gate.sh` |
 | `푸시 승인` | `git push` | 30분 | `approval-gate.sh` |
 | `커밋 푸시 승인` | 커밋과 push 둘 다 | 30분 | `approval-gate.sh` |
 | `하네스 도입 승인` / `하네스 업데이트 승인` | 보호 브랜치에 하네스 파일만 커밋·push | 30분, 승인한 브랜치, push 1회 | `approval-gate.sh`, `pre-push` |
 | `승인 취소` | 현재 브랜치의 계획·커밋·푸시·도입 승인 삭제 | | |
 | `하네스 OFF` / `하네스 ON` | 하네스 훅 전체(승인 게이트·편집 차단·git 안전 차단·Git 훅) 끄기 / 다시 켜기 | `하네스 ON` 입력 전까지, 그 PC의 그 폴더 | `lib.sh`, `commit-msg`, `pre-push` |
+| `Claude 테스터` / `Claude 테스터 해제` (승인 아님) | 입력한 Claude 세션을 테스트·검증 담당으로 지정(Codex 역할, 테스트 작성 포함) / 해제. 새 세션의 첫 입력일 때만 기록 | `Claude 테스터 해제` 또는 다른 세션 지정 전까지, 그 세션 ID | `edit-guard.sh`, `approval-gate.sh` |
 
 **규칙**
 
 - 승인 문구는 **한 줄로 단독 입력**해야 인정됩니다. "계획 승인 전에 뭐 해?"처럼 문장 안에 들어간 언급은 무시합니다.
 - "진행해", "ㄱㄱ" 같은 일반 응답은 승인이 아닙니다. 에이전트가 정확한 문구를 다시 안내합니다.
 - 승인 기록은 **사용자 프롬프트에서만** 만들어집니다. 에이전트가 `.harness/state/`를 다루는 명령은 읽기까지 모두 차단됩니다.
-- 승인 상태는 `sh .harness/hooks/approval-status.sh`로 봅니다(PRD 승인 유효 여부, 이 브랜치의 계획 승인, 커밋·푸시 승인과 남은 시간, 하네스 OFF). Claude는 작업 브랜치에서 세션이 시작·재개될 때 이 요약을 자동으로 받고, Codex는 세션 시작 때 직접 실행합니다. 세션이 끊겨도 새 세션이 이전 승인을 확인할 수 있습니다.
+- 승인 상태는 `sh .harness/hooks/approval-status.sh`로 봅니다(PRD 승인 유효 여부, 이 브랜치의 계획 승인, 커밋·푸시 승인과 남은 시간, 하네스 OFF, 테스트·검증 담당). Claude는 작업 브랜치에서 세션이 시작·재개될 때 이 요약을 자동으로 받고, Codex는 세션 시작 때 직접 실행합니다. 세션이 끊겨도 새 세션이 이전 승인을 확인할 수 있습니다.
 - 승인 기록은 프로젝트 폴더의 `.harness/state/`에 남고 Claude·Codex가 함께 봅니다. 어느 세션에서 입력해도 같은 폴더면 공유됩니다. 승인 문구는 해당 티켓 브랜치로 전환된 상태에서 입력합니다.
 - PRD 승인 해시는 `- 상태:` 줄을 빼고 계산합니다. 그래서 승인 후 상태 줄을 `승인 vX.Y`로 바꿔도 승인은 유지되고, 나머지 내용이 한 글자라도 바뀌면 무효가 됩니다.
 - 계획 승인 후 범위, 파일, 라이브러리가 바뀌면 Claude가 `PLAN.md`를 고치고, `승인 취소` 후 다시 `계획 승인`을 받습니다.
@@ -273,6 +276,7 @@ ID는 바꾸거나 재사용하지 않습니다. 삭제된 요구사항은 행�
 | `verifier` mode=code | Codex | PRD·계획 ↔ 코드 |
 | `verifier` mode=api | Codex | API 문서 ↔ 컨트롤러·DTO·에러 처리 |
 | `verifier` mode=test | Codex | 테스트가 인수 조건을 실제로 검사하는지, 기대값이 문서 기준인지 |
+| `code-verifier` mode=code·api·test | Claude | `verifier`와 같은 판정(원본 `.codex/agents/verifier.toml`). Claude 테스터 세션과 Codex 대행에서 사용 |
 
 **검증 원칙**
 
@@ -395,15 +399,15 @@ feat/ITD-1234 주문 조회 API 추가
 
 | 훅 | 시점 | 막는 것 |
 | --- | --- | --- |
-| `edit-guard.sh` | 파일 편집 전 | Claude의 테스트 코드(`src/test`) 편집 / Codex의 요구사항·PRD·API 문서·`PLAN.md`·소스·빌드 편집 / 계획 승인 없는 소스·테스트 편집 / 작업 브랜치가 아닌 곳(통합 브랜치)에서의 문서·산출물·소스·테스트 편집 / 승인 기록 파일 편집 |
-| `approval-gate.sh` | 셸 명령 전 | 승인 없는 commit·push / 보호 브랜치 커밋 / `.harness/state/`를 다루는 명령(읽기 포함) / 하네스 예외 범위를 벗어난 커밋·push / Codex의 commit·push·merge·rebase·switch·브랜치 전환용 checkout·브랜치 생성 |
+| `edit-guard.sh` | 파일 편집 전 | Claude의 테스트 코드(`src/test`) 편집(Claude 테스터 세션은 허용) / Codex·Claude 테스터 세션의 요구사항·PRD·API 문서·`PLAN.md`·소스·빌드 편집 / 계획 승인 없는 소스·테스트 편집 / 작업 브랜치가 아닌 곳(통합 브랜치)에서의 문서·산출물·소스·테스트 편집 / 승인 기록 파일 편집 |
+| `approval-gate.sh` | 셸 명령 전 | 승인 없는 commit·push / 보호 브랜치 커밋 / `.harness/state/`를 다루는 명령(읽기 포함) / 하네스 예외 범위를 벗어난 커밋·push / Codex·Claude 테스터 세션의 commit·push·merge·rebase·switch·브랜치 전환용 checkout·브랜치 생성 |
 | `git-safety-guard.sh` | 셸 명령 전 | `reset --hard`, `clean -f`, `branch -D`, `checkout -- .`, 강제 push, bare `stash`·`stash pop`, `pkill`·`killall`·`taskkill /IM`·`Stop-Process -Name` |
-| `record-approval.sh` | 사용자 입력 시 | (막지 않음) 승인 문구 기록 |
-| `session-context.sh` | Claude 세션 시작·재개·압축 시 | (막지 않음) 작업 브랜치면 `HANDOFF.md` 상태·진행 위치, 승인 상태(`approval-status.sh`), `git status`를 컨텍스트로 출력 |
+| `record-approval.sh` | 사용자 입력 시 | (막지 않음) 승인 문구 기록, `Claude 테스터` 세션 지정·해제(이전 대화가 있는 세션·Codex 세션은 거부) |
+| `session-context.sh` | Claude 세션 시작·재개·압축 시 | (막지 않음) Claude 테스터 세션이면 역할 안내. 작업 브랜치면 `HANDOFF.md` 상태·진행 위치, 승인 상태(`approval-status.sh`), `git status`를 컨텍스트로 출력 |
 | `.githooks/commit-msg` | 커밋 시 | 작업 브랜치에서 ITD 형식이 아니거나 티켓이 브랜치와 다른 커밋 |
 | `.githooks/pre-push` | push 시 | 보호 브랜치 push (하네스 예외 1회 제외) |
 
-훅이 아니라 규칙(`AGENTS.md`)으로만 막는 것: Codex의 `git add`, 셸 쓰기(`sed -i`, `cat >` 등)로 구현 코드 수정.
+훅이 아니라 규칙(`AGENTS.md`)으로만 막는 것: Codex·Claude 테스터 세션의 `git add`, 셸 쓰기(`sed -i`, `cat >` 등)로 구현 코드 수정.
 
 차단된 작업이 정말 필요하면 **사용자가 터미널에서 직접** 실행합니다. 에이전트는 우회하지 않습니다.
 
@@ -415,7 +419,8 @@ feat/ITD-1234 주문 조회 API 추가
 | --- | --- | --- | --- |
 | Claude 메인 | Opus 5.5 | 작업 브랜치 생성·전환, 요구사항 도출, PRD·API 문서 작성, 개발계획, 구현, 커밋·push | `.claude/settings.json` |
 | Claude `prd-verifier` | Opus 5.5 | PRD 정합성 검증 | `.claude/agents/prd-verifier.md` |
-| Claude `code-verifier` | Opus 5.5 | 구현 검증 대행 | `.claude/agents/code-verifier.md` |
+| Claude 테스터 세션 (선택) | Opus 5.5 | Codex 메인 역할 대체: 테스트 작성, 검증 진행 | `.claude/settings.json` |
+| Claude `code-verifier` | Opus 5.5 | 문서-코드·API·테스트 검증 (Claude 테스터 세션, Codex 대행) | `.claude/agents/code-verifier.md` |
 | Codex 메인 | gpt-6.1-sol, medium | 테스트 작성, 검증 진행 | `.codex/config.toml` |
 | Codex `verifier` | gpt-6.1-sol, medium | 문서-코드·API·테스트 검증, PRD 검증 대행 | `.codex/agents/verifier.toml` |
 
@@ -473,7 +478,7 @@ feat/ITD-1234 주문 조회 API 추가
 
    push 시험용 로컬 원격 `../harness-sandbox-origin.git`도 함께 만듭니다.
 
-2. **훅 자동 검사**: 샌드박스에서 `sh .harness/test/hook-test.sh`를 실행합니다. 역할 분리, 작업 브랜치, 승인 문구·게이트, git 안전, Git 훅, Codex git 제한, 승인 기록 보호·상태 확인, 세션 인계, 하네스 OFF/ON을 80개 항목으로 확인하고 `실패 0`이어야 합니다. 승인 입력을 흉내 내므로 `setup.sh`가 만든 샌드박스에서만 실행됩니다.
+2. **훅 자동 검사**: 샌드박스에서 `sh .harness/test/hook-test.sh`를 실행합니다. 역할 분리, 작업 브랜치, 승인 문구·게이트, git 안전, Git 훅, Codex git 제한, Claude 테스터 세션, 승인 기록 보호·상태 확인, 세션 인계, 하네스 OFF/ON을 105개 항목으로 확인하고 `실패 0`이어야 합니다. 승인 입력을 흉내 내므로 `setup.sh`가 만든 샌드박스에서만 실행됩니다.
 
 3. **세션 시나리오**: 샌드박스 폴더에서 Claude·Codex 세션을 하나씩 열고 [SCENARIOS.md](.harness/test/SCENARIOS.md) 순서대로 입력합니다. Claude 12개(C), Codex 12개(X), 테스트 규칙 12개(T)이고, 결과는 샌드박스의 `harness-test-result.md`에 `통과`/`실패`/`부분`과 근거로 적습니다.
 
@@ -500,7 +505,9 @@ feat/ITD-1234 주문 조회 API 추가
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
 | "계획 승인 기록 없음"으로 편집 차단 | 이 브랜치에 계획 승인이 없음 | `PLAN.md`를 확인하고 이 브랜치에서 `계획 승인` 입력 |
-| Claude가 "테스트 코드는 Codex가 작성"으로 차단 | Claude가 `src/test`를 고치려 함 | 정상 동작. 고칠 테스트를 `HANDOFF.md` 다음 행동에 적고 Codex `test-write`로 넘김 |
+| Claude가 "테스트 코드는 테스트·검증 담당이 작성"으로 차단 | 테스터로 지정되지 않은 Claude 세션이 `src/test`를 고치려 함 | 정상 동작. 고칠 테스트를 `HANDOFF.md` 다음 행동에 적고 Codex(권장) 또는 Claude 테스터 세션의 `test-write`로 넘김 |
+| Claude 테스터 세션인데 테스트 편집이 막힘 | 계획 승인 없음, 세션 ID가 바뀜(새 창·`/clear`), 다른 세션이 나중에 지정됨 | `approval-status.sh`로 계획 승인·테스트·검증 담당 확인. 필요하면 새 세션 첫 입력으로 `Claude 테스터` 다시 입력 |
+| `Claude 테스터` 지정이 거부됨 | 이전 대화가 있는 세션에서 입력함 | 새 창 또는 `/clear` 뒤 첫 입력으로 다시 입력 |
 | Codex가 "소스·빌드 파일을 편집하지 않음"으로 차단 | Codex가 `src/main`·빌드 파일을 고치려 함 | 정상 동작. `HANDOFF.md` "구현 수정 요청"에 적고 Claude에서 "구현 수정 요청 반영해" |
 | "작업 브랜치가 아님"으로 편집 차단 | `main`에서 문서·계획·코드를 고치려 함 | Claude에서 "ITD-#### 작업 시작해줘"로 작업 브랜치로 전환 |
 | `work-start`가 "미커밋 변경 있음"으로 멈춤 | 지금 브랜치에 커밋하지 않은 변경이 있음 | "커밋해줘"로 커밋한 뒤 다시 작업 시작 |
